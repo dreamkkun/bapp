@@ -1,0 +1,838 @@
+<!--
+  ============================================================
+  방학 탐험대 - 초4 1학기 복습 + 한국사 학습 웹앱 (v2: 클라우드 저장)
+  ------------------------------------------------------------
+  · 단일 HTML 파일로 동작
+  · 진행상황을 Firebase에 저장 → 태블릿/데스크탑/노트북 간 이어서 하기
+  · Firebase 설정 전에는 '이 기기에만 저장' 모드로 정상 작동
+  · 문제 데이터(DATA)만 수정하면 내용 교체/추가 가능
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>범희의 방학 탐험대</title>
+
+<!-- 아이가 읽기 편한 둥근 한글 폰트 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet" />
+
+<!-- ===== Firebase SDK (진행상황 클라우드 저장) ===== -->
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
+<script>
+  /* ★★★★★ 여기에 본인 Firebase 설정을 붙여넣으세요 ★★★★★
+     (아래 답변의 '설정 가이드' 5단계 참고)
+     설정 전에도 앱은 '이 기기에만 저장' 모드로 잘 돌아갑니다.
+     apiKey 값이 그대로 "붙여넣기-필요"이면 자동으로 로컬 저장만 씁니다. */
+  window.FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyAO17auJvEI6jNTk8D-wnvDjGBDaPU-n0I",
+    authDomain:        "bapp-915ec.firebaseapp.com",
+    projectId:         "bapp-915ec",
+    storageBucket:     "bapp-915ec.firebasestorage.app",
+    messagingSenderId: "415259922833",
+    appId:             "1:415259922833:web:c143ca54a4b096d80d4a30",
+    measurementId:     "G-0H83N3BFTL"
+  };
+</script>
+
+<style>
+  /* ===== 색상/토큰: 밤하늘·보물 테마 ===== */
+  :root{
+    --bg:#12203A; --panel:#1B2E52; --panel-2:#24386A;
+    --gold:#F6C453; --coral:#FF7A59; --mint:#4ECCA3; --red:#FF6B6B;
+    --text:#EAF0FF; --muted:#8FA3C8; --line:#33477A;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:'Gowun Dodum', sans-serif;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1d3a6e 0%, transparent 60%),
+      var(--bg);
+    background-color:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden;
+  }
+  h1,h2,h3,.jua{ font-family:'Jua', sans-serif; font-weight:400; letter-spacing:.5px; }
+
+  #app{ max-width:520px; margin:0 auto; padding:16px 16px 96px; position:relative; }
+
+  /* ===== 로그인 화면 ===== */
+  #loginScreen{
+    position:fixed; inset:0; z-index:100; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px; text-align:center;
+  }
+  #loginScreen .logo{ font-size:64px; margin-bottom:8px; }
+  #loginScreen h1{ font-size:28px; margin:0 0 6px; }
+  #loginScreen p{ color:var(--muted); font-size:14px; line-height:1.6; margin:0 0 24px; max-width:340px; }
+  #loginScreen input{
+    width:100%; max-width:300px; text-align:center; font-family:'Jua'; font-size:22px;
+    background:var(--panel); border:2px solid var(--line); color:var(--text);
+    border-radius:16px; padding:14px; margin-bottom:14px; outline:none;
+  }
+  #loginScreen input:focus{ border-color:var(--gold); }
+  #loginScreen button{
+    width:100%; max-width:300px; background:var(--coral); color:#fff; border:none;
+    font-family:'Jua'; font-size:19px; padding:15px; border-radius:16px; cursor:pointer;
+    box-shadow:0 5px 0 #c8583c;
+  }
+  #loginScreen button:active{ transform:translateY(4px); box-shadow:0 1px 0 #c8583c; }
+  #loginScreen .mode{ margin-top:20px; font-size:12px; color:#5b6f9c; }
+
+  /* ===== 상단 상태바 ===== */
+  .topbar{
+    display:flex; align-items:center; gap:12px;
+    background:var(--panel); border:2px solid var(--line);
+    border-radius:18px; padding:12px 14px; margin-bottom:8px;
+  }
+  .avatar{
+    width:46px; height:46px; border-radius:14px; flex:none;
+    background:linear-gradient(145deg,#3b5bb0,#24386A);
+    display:grid; place-items:center; font-size:26px; border:2px solid var(--panel-2);
+  }
+  .lv-wrap{ flex:1; min-width:0; }
+  .lv-line{ display:flex; align-items:baseline; gap:6px; }
+  .lv-line b{ font-family:'Jua'; font-size:16px; }
+  .lv-line span{ color:var(--muted); font-size:12px; }
+  .expbar{ height:9px; background:#0e1830; border-radius:99px; margin-top:6px; overflow:hidden; }
+  .expbar > i{ display:block; height:100%; background:linear-gradient(90deg,var(--mint),#7ef0c9); width:0%; transition:width .5s; }
+  .gold-pill{
+    flex:none; background:#0e1830; border:2px solid var(--gold); color:var(--gold);
+    font-family:'Jua'; font-size:15px; padding:8px 12px; border-radius:14px;
+    display:flex; align-items:center; gap:6px;
+  }
+  /* 동기화 상태 표시줄 */
+  .sync-status{ font-size:11px; color:var(--muted); text-align:right; margin:0 6px 16px; height:14px; }
+  .sync-status.saved{ color:var(--mint); }
+  .sync-status.saving{ color:var(--gold); }
+  .sync-status.error{ color:var(--red); }
+
+  .screen{ display:none; animation:fade .35s ease; }
+  .screen.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+  .hello{
+    background:linear-gradient(135deg,#26407e,#1B2E52);
+    border:2px solid var(--line); border-radius:20px; padding:16px 18px; margin-bottom:16px;
+  }
+  .hello .msg{ font-family:'Jua'; font-size:17px; line-height:1.5; }
+  .hello .sub{ color:var(--muted); font-size:13px; margin-top:6px; }
+
+  .section-title{ font-family:'Jua'; font-size:19px; margin:20px 4px 12px; display:flex; align-items:center; gap:8px; }
+  .section-title small{ color:var(--muted); font-size:12px; font-family:'Gowun Dodum'; }
+
+  .quest{
+    display:flex; align-items:center; gap:14px;
+    background:var(--panel); border:2px solid var(--line);
+    border-radius:18px; padding:14px; margin-bottom:12px; cursor:pointer;
+    transition:transform .1s, border-color .2s;
+  }
+  .quest:active{ transform:scale(.98); }
+  .quest.done{ opacity:.6; border-color:var(--mint); }
+  .q-icon{ width:52px; height:52px; border-radius:14px; flex:none; display:grid; place-items:center; font-size:28px; background:var(--panel-2); }
+  .q-body{ flex:1; min-width:0; }
+  .q-body b{ font-family:'Jua'; font-size:16px; }
+  .q-body p{ margin:3px 0 0; color:var(--muted); font-size:12.5px; }
+  .q-reward{ flex:none; font-family:'Jua'; color:var(--gold); font-size:13px; text-align:right; }
+  .q-check{ font-size:22px; }
+
+  .map-intro{ color:var(--muted); font-size:13px; margin:0 4px 14px; line-height:1.5; }
+  .stage{
+    position:relative; display:flex; align-items:center; gap:14px;
+    background:var(--panel); border:2px solid var(--line);
+    border-radius:18px; padding:14px; margin-bottom:14px; cursor:pointer; transition:transform .1s;
+  }
+  .stage:active{ transform:scale(.98); }
+  .stage.locked{ opacity:.45; cursor:not-allowed; }
+  .stage.cleared{ border-color:var(--gold); }
+  .stage-num{
+    width:44px; height:44px; flex:none; border-radius:50%;
+    display:grid; place-items:center; font-family:'Jua'; font-size:18px;
+    background:var(--panel-2); border:2px solid var(--line);
+  }
+  .stage.cleared .stage-num{ background:var(--gold); color:#3a2a00; border-color:var(--gold); }
+  .stage-body{ flex:1; }
+  .stage-body b{ font-family:'Jua'; font-size:16px; }
+  .stage-body p{ margin:3px 0 0; color:var(--muted); font-size:12.5px; }
+  .stage-flag{ font-size:26px; }
+
+  .dogam-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .card{
+    aspect-ratio:3/4; border-radius:16px; border:2px solid var(--line);
+    background:linear-gradient(160deg,#26407e,#182a4f);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:10px; position:relative; overflow:hidden;
+  }
+  .card.locked{ background:#141f38; }
+  .card .emoji{ font-size:44px; filter:drop-shadow(0 4px 6px rgba(0,0,0,.4)); }
+  .card.locked .emoji{ filter:grayscale(1) brightness(.4); }
+  .card .name{ font-family:'Jua'; font-size:15px; margin-top:8px; }
+  .card .desc{ color:var(--muted); font-size:11px; margin-top:4px; line-height:1.4; }
+  .card.locked .name,.card.locked .desc{ color:#3f5486; }
+  .card .ribbon{ position:absolute; top:8px; right:8px; font-size:12px; color:var(--gold); font-family:'Jua'; }
+
+  .shop-note{ color:var(--muted); font-size:13px; margin:0 4px 14px; line-height:1.5; }
+  .shop-item{
+    display:flex; align-items:center; gap:14px;
+    background:var(--panel); border:2px solid var(--line);
+    border-radius:18px; padding:14px; margin-bottom:12px;
+  }
+  .shop-item .emoji{ font-size:32px; }
+  .shop-item .info{ flex:1; }
+  .shop-item .info b{ font-family:'Jua'; font-size:15px; }
+  .shop-item .info p{ margin:3px 0 0; color:var(--muted); font-size:12px; }
+  .buy-btn{
+    background:var(--gold); color:#3a2a00; border:none; font-family:'Jua'; font-size:13px;
+    padding:9px 12px; border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:4px;
+    box-shadow:0 4px 0 #c99b2f;
+  }
+  .buy-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #c99b2f; }
+  .buy-btn:disabled{ background:#3a4870; color:#6b7ba6; box-shadow:none; cursor:not-allowed; }
+
+  .tabbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:40; max-width:520px; margin:0 auto;
+    background:var(--panel); border-top:2px solid var(--line);
+    display:grid; grid-template-columns:repeat(4,1fr);
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab{ background:none; border:none; color:var(--muted); font-family:'Jua'; font-size:12px; padding:8px 0; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
+  .tab .ic{ font-size:22px; }
+  .tab.active{ color:var(--gold); }
+
+  .modal-bg{
+    position:fixed; inset:0; z-index:60; background:rgba(6,12,26,.82);
+    display:none; align-items:center; justify-content:center; padding:16px;
+  }
+  .modal-bg.open{ display:flex; }
+  .modal{
+    width:100%; max-width:460px; background:var(--panel); border:2px solid var(--line);
+    border-radius:22px; padding:20px; max-height:90vh; overflow-y:auto;
+  }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .modal-head .tag{ font-family:'Jua'; font-size:13px; color:var(--gold); }
+  .modal-head .x{ background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; }
+  .progress-dots{ display:flex; gap:6px; margin:4px 0 16px; }
+  .progress-dots i{ width:100%; height:6px; border-radius:99px; background:#0e1830; }
+  .progress-dots i.on{ background:var(--mint); }
+
+  .story{ background:var(--panel-2); border-radius:14px; padding:14px; font-size:14px; line-height:1.6; margin-bottom:14px; }
+  .qtext{ font-family:'Jua'; font-size:18px; line-height:1.5; margin:6px 0 16px; }
+  .tts-btn{
+    background:none; border:2px solid var(--line); color:var(--muted); border-radius:10px;
+    padding:5px 10px; font-family:'Gowun Dodum'; font-size:12px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px; margin-bottom:12px;
+  }
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .opt{
+    text-align:left; background:var(--panel-2); border:2px solid var(--line); color:var(--text);
+    font-family:'Gowun Dodum'; font-size:15px; padding:14px 16px; border-radius:14px; cursor:pointer; transition:transform .08s;
+  }
+  .opt:active{ transform:scale(.98); }
+  .opt.correct{ border-color:var(--mint); background:rgba(78,204,163,.15); }
+  .opt.wrong{ border-color:var(--red); background:rgba(255,107,107,.12); }
+  .opt:disabled{ cursor:default; }
+
+  .feedback{ margin-top:16px; text-align:center; display:none; }
+  .feedback.show{ display:block; animation:fade .3s; }
+  .feedback .big{ font-family:'Jua'; font-size:20px; }
+  .feedback .hint{ background:#0e1830; border-radius:12px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--gold); line-height:1.5; }
+  .next-btn{
+    width:100%; margin-top:16px; background:var(--coral); color:#fff; border:none;
+    font-family:'Jua'; font-size:17px; padding:15px; border-radius:16px; cursor:pointer; box-shadow:0 5px 0 #c8583c;
+  }
+  .next-btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #c8583c; }
+
+  .reward-pop{ text-align:center; padding:10px 0; }
+  .reward-pop .emoji{ font-size:70px; animation:pop .5s ease; }
+  @keyframes pop{ 0%{transform:scale(0);} 70%{transform:scale(1.25);} 100%{transform:scale(1);} }
+  .reward-pop .title{ font-family:'Jua'; font-size:22px; margin-top:8px; }
+  .reward-pop .gain{ color:var(--gold); font-family:'Jua'; font-size:16px; margin-top:6px; }
+
+  .toast{
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#0e1830; border:2px solid var(--gold); color:var(--gold);
+    font-family:'Jua'; padding:12px 18px; border-radius:14px; z-index:80;
+    opacity:0; transition:.3s; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .reset-link{ text-align:center; margin-top:24px; }
+  .reset-link button{ background:none; border:none; color:#5b6f9c; font-size:12px; text-decoration:underline; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<!-- ===== 로그인 화면 (탐험가 번호 입력) ===== -->
+<div id="loginScreen">
+  <div class="logo">🚀</div>
+  <h1>범희의 방학 탐험대</h1>
+  <p>탐험가 이름이나 번호를 정해서 입력하세요.<br>다음에 같은 걸 입력하면 <b>어느 기기에서든</b> 이어서 할 수 있어요.</p>
+  <input id="codeInput" type="text" value="범희" placeholder="예: 범희" maxlength="20" autocomplete="off" />
+  <button id="loginBtn">탐험 시작! 🚀</button>
+  <div class="mode" id="loginMode"></div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="avatar" id="avatar">🧑‍🚀</div>
+    <div class="lv-wrap">
+      <div class="lv-line"><b id="lvText">범희 · Lv.1 탐험 새싹</b><span id="expText">0/100</span></div>
+      <div class="expbar"><i id="expFill"></i></div>
+    </div>
+    <div class="gold-pill">🪙 <span id="goldText">0</span></div>
+  </div>
+  <div class="sync-status" id="syncStatus"></div>
+
+  <!-- 홈 -->
+  <section class="screen active" id="screen-home">
+    <div class="hello">
+      <div class="msg" id="dailyMsg">오늘도 탐험 준비 완료! 🚀</div>
+      <div class="sub">퀘스트를 깨면 골드와 경험치를 얻어요.</div>
+    </div>
+    <div class="section-title">📋 오늘의 복습 퀘스트 <small>1학기 핵심</small></div>
+    <div id="questList"></div>
+  </section>
+
+  <!-- 한국사 -->
+  <section class="screen" id="screen-history">
+    <div class="section-title">🗺️ 타임머신 역사 탐험</div>
+    <p class="map-intro">스테이지를 차례로 깨면서 옛날로 시간여행을 떠나요. 성공하면 역사 인물 <b>카드</b>를 모을 수 있어요!</p>
+    <div id="stageList"></div>
+  </section>
+
+  <!-- 도감 -->
+  <section class="screen" id="screen-dogam">
+    <div class="section-title">📗 역사 인물 도감 <small id="dogamCount"></small></div>
+    <div class="dogam-grid" id="dogamGrid"></div>
+  </section>
+
+  <!-- 상점 -->
+  <section class="screen" id="screen-shop">
+    <div class="section-title">🎁 보상 상점</div>
+    <p class="shop-note">모은 골드로 쿠폰을 바꿔요. 쿠폰을 바꾸면 저녁에 엄마·아빠에게 보여주세요!</p>
+    <div id="shopList"></div>
+    <div class="reset-link"><button id="resetBtn">이 탐험가 기록 지우고 처음부터</button></div>
+  </section>
+
+  <nav class="tabbar">
+    <button class="tab active" data-screen="home"><span class="ic">🏠</span>홈</button>
+    <button class="tab" data-screen="history"><span class="ic">🏯</span>한국사</button>
+    <button class="tab" data-screen="dogam"><span class="ic">📗</span>도감</button>
+    <button class="tab" data-screen="shop"><span class="ic">🎁</span>상점</button>
+  </nav>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalContent"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   1) 클라우드(Firebase) 래퍼
+   ------------------------------------------------------------
+   설정이 채워져 있으면 Firestore 사용, 아니면 자동으로 꺼짐.
+   ============================================================ */
+const Cloud = {
+  db:null, ready:false,
+  init(){
+    const cfg = window.FIREBASE_CONFIG;
+    // 설정값이 비어 있거나 예시값이면 클라우드 사용 안 함
+    if (!cfg || !cfg.apiKey || cfg.apiKey.indexOf('붙여넣기') === 0) return;
+    try {
+      firebase.initializeApp(cfg);
+      this.db = firebase.firestore();
+      this.ready = true;
+    } catch (e) { this.ready = false; }
+  },
+  // 탐험가 코드로 저장된 데이터 읽기
+  async load(code){
+    if (!this.ready) return null;
+    try {
+      const doc = await this.db.collection('players').doc(code).get();
+      return doc.exists ? doc.data().state : null;
+    } catch (e) { return null; }
+  },
+  // 탐험가 코드로 데이터 저장
+  async save(code, state){
+    if (!this.ready) return false;
+    try {
+      await this.db.collection('players').doc(code)
+        .set({ state, updatedAt: Date.now() });
+      return true;
+    } catch (e) { return false; }
+  },
+  // 데이터 삭제
+  async remove(code){
+    if (!this.ready) return;
+    try { await this.db.collection('players').doc(code).delete(); } catch (e) {}
+  }
+};
+
+/* ============================================================
+   2) 저장소 계층 (로컬 즉시 저장 + 클라우드 동기화)
+   ------------------------------------------------------------
+   - 로컬(localStorage): 항상 즉시 저장 → 빠르고 오프라인에서도 안전
+   - 클라우드(Firebase): 여유될 때 저장 → 기기 간 이어서 하기
+   ============================================================ */
+const Store = {
+  code:null,                                  // 현재 탐험가 코드
+  localKey(){ return 'explorer_save_' + this.code; },
+
+  // 로컬 스토리지 사용 가능 여부
+  hasLocal:(() => { try{ localStorage.setItem('__t__','1'); localStorage.removeItem('__t__'); return true; }catch(e){ return false; } })(),
+
+  // 로그인: 코드 저장 + 클라우드/로컬에서 데이터 불러오기
+  async login(code){
+    this.code = code;
+    if (this.hasLocal) localStorage.setItem('explorer_last_code', code);
+
+    // 로컬 우선 로드(즉시 화면 표시용)
+    let local = null;
+    if (this.hasLocal){
+      const raw = localStorage.getItem(this.localKey());
+      if (raw) { try { local = JSON.parse(raw); } catch(e){} }
+    }
+    // 클라우드 로드(있으면 여러 기기의 최신 기준)
+    const cloud = await Cloud.load(code);
+
+    // 클라우드에 값이 있으면 클라우드를, 없으면 로컬을 사용
+    return cloud || local || null;
+  },
+
+  // 저장: 로컬 즉시 + 클라우드 시도, 상태 콜백으로 알림
+  async save(state, onStatus){
+    if (this.hasLocal) localStorage.setItem(this.localKey(), JSON.stringify(state));
+    if (Cloud.ready){
+      if (onStatus) onStatus('saving');
+      const ok = await Cloud.save(this.code, state);
+      if (onStatus) onStatus(ok ? 'saved' : 'error');
+    } else {
+      if (onStatus) onStatus('local');
+    }
+  },
+
+  // 현재 탐험가 기록 삭제(로컬+클라우드)
+  async clear(){
+    if (this.hasLocal) localStorage.removeItem(this.localKey());
+    await Cloud.remove(this.code);
+  }
+};
+
+/* ============================================================
+   3) 문제 데이터 (이 부분만 고치면 내용 교체·추가 가능)
+   ============================================================ */
+const DAILY_MESSAGES = [
+  "범희야, 혼자서도 씩씩하게 잘 지내줘서 고마워! 오늘도 파이팅 🚀",
+  "탐험대장 범희님, 오늘의 미션이 기다리고 있어요! ⭐",
+  "범희야, 천천히 해도 괜찮아. 끝나면 맛있는 거 먹자! 🍜",
+  "범희야, 어제보다 한 걸음 더! 넌 정말 대단해 💪",
+  "범희야, 오늘 골드 많이 모아서 멋진 쿠폰 바꿔보자! 🪙"
+];
+
+// answer = options 배열의 인덱스(0부터 시작)
+const QUESTS = [
+  { id:'math1', subject:'수학', icon:'🔢', title:'보물상자 비밀번호', desc:'큰 수 · 곱셈으로 자물쇠 열기', reward:30,
+    questions:[
+      { q:'350 × 20 은 얼마일까요?', options:['700','7,000','70,000'], answer:1, hint:'35 × 2 = 70 을 먼저 구하고, 뒤에 0을 두 개 붙여봐!' },
+      { q:'숫자 "육만 오천"을 바르게 쓴 것은?', options:['6,500','65,000','650,000'], answer:1, hint:'만(10000)이 6개, 천(1000)이 5개 있어요.' },
+      { q:'428 × 30 의 값은?', options:['12,840','1,284','128,400'], answer:0, hint:'428 × 3 = 1284, 뒤에 0을 하나 붙이면 돼!' },
+      { q:'1,000이 8개, 100이 3개인 수는?', options:['8,300','830','83,000'], answer:0, hint:'1000×8=8000, 100×3=300 을 더해봐!' },
+      { q:'204 × 5 는 얼마일까요?', options:['1,020','1,002','120'], answer:0, hint:'200×5=1000, 4×5=20 을 더하면 돼!' }
+    ] },
+  { id:'math2', subject:'수학', icon:'📐', title:'각도 다이얼 맞추기', desc:'각의 크기 알아맞히기', reward:30,
+    questions:[
+      { q:'직각(ㄱ자 모양)은 몇 도일까요?', options:['45도','90도','180도'], answer:1, hint:'책 모서리처럼 반듯하게 꺾인 각이 직각이에요.' },
+      { q:'120도는 어떤 각일까요?', options:['예각(작은 각)','직각','둔각(큰 각)'], answer:2, hint:'90도보다 크면 둔각, 작으면 예각이에요.' },
+      { q:'세 각 중 90도보다 작은 각을 무엇이라고 할까요?', options:['예각','둔각','평각'], answer:0, hint:'90도보다 작으면 예각이에요.' },
+      { q:'시계가 3시를 가리킬 때 시침과 분침이 이루는 각도는?', options:['60도','90도','180도'], answer:1, hint:'시계 한 바퀴는 360도, 3시는 그 4분의 1이에요.' },
+      { q:'170도는 예각, 직각, 둔각 중 무엇일까요?', options:['예각','직각','둔각'], answer:2, hint:'90도보다 크고 180도보다 작으면 둔각이에요.' }
+    ] },
+  { id:'sci1', subject:'과학', icon:'🧲', title:'혼합물 분리 실험실', desc:'섞인 것을 분리하는 방법', reward:30,
+    questions:[
+      { q:'철가루와 모래가 섞였어요. 철가루만 골라내려면?', options:['체로 거르기','자석 사용하기','물에 넣기'], answer:1, hint:'철은 자석에 붙는 성질이 있어요!' },
+      { q:'소금물에서 소금을 다시 얻으려면 어떻게 할까요?', options:['물을 증발시키기','자석 붙이기','체로 거르기'], answer:0, hint:'물이 날아가면 소금만 남아요.' },
+      { q:'콩과 모래가 섞인 것을 물에 넣으면 콩이 위로 뜨는 성질을 이용해 분리하는 방법은?', options:['물에 띄워 분리하기','자석 사용하기','체로 거르기'], answer:0, hint:'콩은 물보다 가벼워서 위로 떠올라요.' },
+      { q:'쌀과 좁쌀처럼 알갱이 크기가 다른 것을 분리할 때 사용하는 도구는?', options:['자석','체','거름종이'], answer:1, hint:'체는 구멍 크기로 알갱이를 걸러내요.' },
+      { q:'물과 기름을 섞으면 어떻게 될까요?', options:['완전히 섞인다','섞이지 않고 층이 나뉜다','둘 다 사라진다'], answer:1, hint:'기름은 물보다 가벼워서 위에 뜨는 층이 생겨요.' }
+    ] },
+  { id:'sci2', subject:'과학', icon:'🌱', title:'식물의 한살이', desc:'씨앗에서 열매까지', reward:30,
+    questions:[
+      { q:'식물의 한살이 순서로 맞는 것은?', options:['씨 → 싹 → 꽃 → 열매','꽃 → 씨 → 싹 → 열매','열매 → 꽃 → 싹 → 씨'], answer:0, hint:'씨앗을 심으면 가장 먼저 싹이 나요.' },
+      { q:'씨가 싹트는 데 꼭 필요한 것이 아닌 것은?', options:['물','알맞은 온도','텔레비전'], answer:2, hint:'식물은 물과 따뜻함이 필요하지 기계는 필요 없어요!' },
+      { q:'씨앗에서 처음 자라 나오는 부분을 무엇이라고 할까요?', options:['뿌리','싹','열매'], answer:1, hint:'씨앗이 트면 가장 먼저 싹이 나와요.' },
+      { q:'식물이 자라는 데 꼭 필요한 것이 아닌 것은?', options:['햇빛','흙 속의 물','장난감'], answer:2, hint:'식물은 햇빛과 물이 있어야 잘 자라요.' },
+      { q:'꽃이 지고 난 자리에 생기는, 씨를 담고 있는 부분은?', options:['잎','줄기','열매'], answer:2, hint:'열매 속에는 다음에 심을 씨앗이 들어있어요.' }
+    ] },
+  { id:'soc1', subject:'사회', icon:'🗺️', title:'우리 지역 탐험', desc:'지도와 지역의 중심지', reward:30,
+    questions:[
+      { q:'사람들이 많이 모이고 물건을 사고파는 지역의 중심을 뭐라고 할까요?', options:['중심지','논밭','바닷가'], answer:0, hint:'시장, 버스터미널, 관공서가 모여 있는 곳이에요.' },
+      { q:'지도에서 위쪽은 보통 어느 방향일까요?', options:['남쪽','동쪽','북쪽'], answer:2, hint:'지도는 특별한 표시가 없으면 위가 북쪽이에요.' },
+      { q:'지도에서 실제 거리를 줄여서 나타낸 정도를 무엇이라고 할까요?', options:['축척','방위표','기호'], answer:0, hint:'실제보다 얼마나 줄였는지 알려주는 것이 축척이에요.' },
+      { q:'지도에서 학교, 병원 같은 곳을 간단한 그림으로 표시한 것을 뭐라고 할까요?', options:['범례(기호)','축척','등고선'], answer:0, hint:'그림으로 약속된 표시를 기호라고 해요.' },
+      { q:'논밭이 많고 곡식을 기르는 지역을 무엇이라고 부를까요?', options:['농촌','어촌','산지촌'], answer:0, hint:'농사를 짓는 마을을 농촌이라고 해요.' }
+    ] }
+];
+
+const HISTORY = [
+  { id:'h1', num:1, era:'고조선', flag:'🐻', reward:40,
+    card:{ emoji:'👑', name:'단군왕검', desc:'우리나라 첫 나라 고조선을 세운 임금' },
+    story:'아주 먼 옛날, 곰과 호랑이가 사람이 되고 싶어 했어요. 곰은 어두운 동굴에서 참고 견뎌 사람(웅녀)이 되었고, 훗날 단군왕검이 태어나 우리나라 최초의 나라 고조선을 세웠답니다.',
+    questions:[
+      { q:'곰이 사람이 되려고 동굴에서 먹은 것은?', options:['마늘과 쑥','배추와 무','사과와 배'], answer:0, hint:'맵고 쓴 두 가지 채소예요.' },
+      { q:'단군왕검이 세운 우리나라 최초의 나라는?', options:['신라','고조선','조선'], answer:1, hint:'"고(옛) + 조선" 이라고 불러요.' },
+      { q:'곰과 호랑이 중 사람이 된 동물은 무엇일까요?', options:['호랑이','곰','둘 다'], answer:1, hint:'끝까지 참고 견딘 곰이 사람이 되었어요.' },
+      { q:'단군왕검의 아버지는 하늘에서 내려온 신, 그 이름은 무엇일까요?', options:['환웅','해모수','주몽'], answer:0, hint:'하늘의 아들, 환웅이 땅으로 내려왔어요.' },
+      { q:'고조선은 어느 시대에 만들어진 나라일까요?', options:['아주 먼 옛날(청동기 시대)','현대','조선 시대 바로 전'], answer:0, hint:'우리 역사에서 가장 처음 생긴 나라예요.' }
+    ] },
+  { id:'h2', num:2, era:'삼국시대', flag:'🐎', reward:40,
+    card:{ emoji:'🛡️', name:'광개토대왕', desc:'고구려의 땅을 크게 넓힌 정복왕' },
+    story:'고구려에는 아주 용맹한 왕이 있었어요. 이름처럼 나라의 땅(영토)을 크게 넓힌 광개토대왕이에요. 북쪽으로 힘차게 나아가 고구려를 동아시아 최강국으로 만들었답니다.',
+    questions:[
+      { q:'고구려의 영토를 크게 넓힌 왕은?', options:['세종대왕','광개토대왕','선덕여왕'], answer:1, hint:'이름 뜻이 "땅(토)을 널리(광) 열었다(개)"예요.' },
+      { q:'고구려·백제와 함께 삼국을 이룬 나라는?', options:['신라','고려','발해'], answer:0, hint:'훗날 삼국을 통일하는 나라예요.' },
+      { q:'광개토대왕이 다스린 나라는 어디일까요?', options:['백제','고구려','신라'], answer:1, hint:'고구려의 왕이에요.' },
+      { q:'삼국시대에 있던 세 나라가 아닌 것은?', options:['백제','발해','신라'], answer:1, hint:'발해는 삼국시대 이후에 세워진 나라예요.' },
+      { q:'광개토대왕의 업적을 기록한 비석의 이름은?', options:['광개토대왕릉비','첨성대','석굴암'], answer:0, hint:'왕의 업적을 새긴 커다란 비석이에요.' }
+    ] },
+  { id:'h3', num:3, era:'신라', flag:'🌸', reward:40,
+    card:{ emoji:'🌼', name:'선덕여왕', desc:'신라를 다스린 지혜로운 첫 여왕' },
+    story:'신라에는 우리나라 최초의 여왕, 선덕여왕이 있었어요. 어릴 때 모란꽃 그림을 보고 "벌·나비가 없으니 향기가 없겠구나"라고 알아맞혔을 만큼 지혜로웠대요. 별을 관찰하는 첨성대도 이때 만들어졌어요.',
+    questions:[
+      { q:'우리나라 최초의 여왕은 누구일까요?', options:['선덕여왕','유관순','신사임당'], answer:0, hint:'신라를 지혜롭게 다스린 왕이에요.' },
+      { q:'선덕여왕 때 별을 관찰하려고 만든 것은?', options:['첨성대','석굴암','불국사'], answer:0, hint:'하늘의 별을 살피던 높은 돌탑이에요.' },
+      { q:'선덕여왕은 어느 나라의 왕이었을까요?', options:['백제','고구려','신라'], answer:2, hint:'삼국 중 하나인 신라를 다스렸어요.' },
+      { q:'선덕여왕이 모란꽃 그림을 보고 알아맞힌 것은 무엇일까요?', options:['향기가 없을 것','열매가 열릴 것','빨리 시들 것'], answer:0, hint:'그림에는 벌과 나비가 없었어요.' },
+      { q:'첨성대는 무엇을 관찰하기 위해 만들었을까요?', options:['바다','별과 하늘','땅속'], answer:1, hint:'하늘의 별을 살피던 곳이에요.' }
+    ] },
+  { id:'h4', num:4, era:'고려', flag:'🏹', reward:40,
+    card:{ emoji:'⚔️', name:'강감찬', desc:'귀주대첩에서 거란을 물리친 장군' },
+    story:'고려에 거란(외적)이 쳐들어왔어요. 강감찬 장군은 지혜로운 작전을 세워 귀주라는 곳에서 크게 승리했어요. 이 큰 승리를 "귀주대첩"이라고 불러요.',
+    questions:[
+      { q:'귀주대첩에서 거란을 물리친 고려의 장군은?', options:['이순신','강감찬','김유신'], answer:1, hint:'"강"씨 성을 가진 고려의 명장이에요.' },
+      { q:'강감찬 장군이 물리친 외적은 누구일까요?', options:['거란','일본','몽골'], answer:0, hint:'북쪽에서 쳐들어온 나라예요.' },
+      { q:'강감찬 장군이 활약한 나라는 어디일까요?', options:['고려','조선','신라'], answer:0, hint:'고려 시대의 명장이에요.' },
+      { q:'"귀주대첩"에서 "대첩"은 무슨 뜻일까요?', options:['큰 승리','큰 실패','평화 협정'], answer:0, hint:'전쟁에서 크게 이긴 것을 대첩이라고 해요.' },
+      { q:'거란은 어느 방향에서 고려로 쳐들어왔을까요?', options:['북쪽','남쪽','동쪽'], answer:0, hint:'북쪽 나라인 거란이 내려왔어요.' }
+    ] },
+  { id:'h5', num:5, era:'조선', flag:'📜', reward:50,
+    card:{ emoji:'👑', name:'세종대왕', desc:'한글(훈민정음)을 만든 조선의 임금' },
+    story:'조선의 세종대왕은 백성들이 글을 몰라 힘들어하는 걸 안타까워했어요. 그래서 누구나 쉽게 배울 수 있는 글자, 훈민정음(한글)을 만들었어요. 지금 우리가 쓰는 바로 그 한글이에요!',
+    questions:[
+      { q:'백성을 위해 한글(훈민정음)을 만든 임금은?', options:['광개토대왕','세종대왕','태조 이성계'], answer:1, hint:'조선의 네 번째 임금이에요.' },
+      { q:'"훈민정음"은 무슨 뜻일까요?', options:['백성을 가르치는 바른 소리','임금의 명령','전쟁 이야기'], answer:0, hint:'훈민(백성을 가르침) + 정음(바른 소리)' },
+      { q:'세종대왕은 몇 번째 조선의 임금이었을까요?', options:['첫 번째','네 번째','열 번째'], answer:1, hint:'조선의 네 번째 임금이에요.' },
+      { q:'한글이 만들어지기 전에는 주로 어떤 글자를 사용했을까요?', options:['한자','영어','그림 문자'], answer:0, hint:'중국에서 온 어려운 글자를 썼어요.' },
+      { q:'세종대왕이 한글을 만든 가장 큰 이유는 무엇일까요?', options:['외국과 무역하려고','백성이 글을 쉽게 배우게 하려고','왕의 권위를 높이려고'], answer:1, hint:'글을 몰라 힘들어하는 백성을 위해서예요.' }
+    ] }
+];
+
+const SHOP = [
+  { id:'s1', emoji:'🎮', name:'게임 시간 30분 연장권', desc:'저녁에 게임 30분 더!', price:80 },
+  { id:'s2', emoji:'🍦', name:'아이스크림 쿠폰',       desc:'좋아하는 아이스크림 한 개', price:60 },
+  { id:'s3', emoji:'🍕', name:'저녁 메뉴 선택권',       desc:'오늘 저녁은 내가 고른다!', price:100 },
+  { id:'s4', emoji:'🎬', name:'가족 영화 보기 쿠폰',     desc:'주말에 같이 영화 보기', price:120 }
+];
+
+/* ============================================================
+   4) 게임 상태 & 핵심 로직
+   ============================================================ */
+function defaultState(){
+  return { level:1, exp:0, gold:0, doneQuests:[], clearedStages:[], cards:[], boughtLog:[] };
+}
+let STATE = defaultState();
+const LV_EXP = 100;
+
+function grant(exp, gold){
+  STATE.exp += exp; STATE.gold += gold;
+  while (STATE.exp >= LV_EXP){ STATE.exp -= LV_EXP; STATE.level += 1; }
+}
+function levelTitle(lv){
+  if (lv >= 8) return '전설의 탐험왕';
+  if (lv >= 5) return '베테랑 탐험가';
+  if (lv >= 3) return '용감한 탐험가';
+  return '탐험 새싹';
+}
+
+/* ============================================================
+   5) 화면 그리기
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+
+function renderTopbar(){
+  $('#lvText').textContent  = '범희 · Lv.' + STATE.level + ' ' + levelTitle(STATE.level);
+  $('#expText').textContent = STATE.exp + '/' + LV_EXP;
+  $('#expFill').style.width = ((STATE.exp/LV_EXP)*100) + '%';
+  $('#goldText').textContent= STATE.gold.toLocaleString();
+}
+
+function renderHome(){
+  $('#dailyMsg').textContent = DAILY_MESSAGES[new Date().getDate() % DAILY_MESSAGES.length];
+  const list = $('#questList'); list.innerHTML = '';
+  QUESTS.forEach(qz => {
+    const done = STATE.doneQuests.includes(qz.id);
+    const el = document.createElement('div');
+    el.className = 'quest' + (done ? ' done' : '');
+    el.innerHTML =
+      '<div class="q-icon">' + qz.icon + '</div>' +
+      '<div class="q-body"><b>' + qz.title + '</b><p>' + qz.subject + ' · ' + qz.desc + '</p></div>' +
+      (done ? '<div class="q-check">✅</div>'
+            : '<div class="q-reward">🪙+' + qz.reward + '<br>⭐+' + qz.reward + '</div>');
+    el.onclick = () => openQuestQuiz(qz);
+    list.appendChild(el);
+  });
+}
+
+function renderHistory(){
+  const list = $('#stageList'); list.innerHTML = '';
+  HISTORY.forEach((st, i) => {
+    const cleared = STATE.clearedStages.includes(st.id);
+    const unlocked = i === 0 || STATE.clearedStages.includes(HISTORY[i-1].id);
+    let cls = 'stage';
+    if (cleared) cls += ' cleared'; else if (!unlocked) cls += ' locked';
+    const el = document.createElement('div');
+    el.className = cls;
+    el.innerHTML =
+      '<div class="stage-num">' + (cleared ? '⭐' : st.num) + '</div>' +
+      '<div class="stage-body"><b>' + st.era + '</b><p>' +
+      (cleared ? '클리어! 카드 획득 완료' : (unlocked ? '탐험할 수 있어요' : '앞 스테이지를 먼저 깨야 해요')) +
+      '</p></div>' +
+      '<div class="stage-flag">' + ((unlocked || cleared) ? st.flag : '🔒') + '</div>';
+    if (unlocked || cleared) el.onclick = () => openHistoryStage(st);
+    list.appendChild(el);
+  });
+}
+
+function renderDogam(){
+  const grid = $('#dogamGrid'); grid.innerHTML = '';
+  HISTORY.forEach(st => {
+    const owned = STATE.cards.includes(st.id);
+    const c = st.card;
+    const el = document.createElement('div');
+    el.className = 'card' + (owned ? '' : ' locked');
+    el.innerHTML = owned
+      ? '<div class="ribbon">★</div><div class="emoji">' + c.emoji + '</div><div class="name">' + c.name + '</div><div class="desc">' + c.desc + '</div>'
+      : '<div class="emoji">❔</div><div class="name">???</div><div class="desc">' + st.era + ' 스테이지를<br>깨면 열려요</div>';
+    grid.appendChild(el);
+  });
+  $('#dogamCount').textContent = STATE.cards.length + ' / ' + HISTORY.length;
+}
+
+function renderShop(){
+  const list = $('#shopList'); list.innerHTML = '';
+  SHOP.forEach(item => {
+    const count = STATE.boughtLog.filter(x => x === item.id).length;
+    const canBuy = STATE.gold >= item.price;
+    const el = document.createElement('div');
+    el.className = 'shop-item';
+    el.innerHTML =
+      '<div class="emoji">' + item.emoji + '</div>' +
+      '<div class="info"><b>' + item.name + '</b><p>' + item.desc + (count ? ' · 지금까지 ' + count + '개 교환' : '') + '</p></div>' +
+      '<button class="buy-btn"' + (canBuy ? '' : ' disabled') + '>🪙 ' + item.price + '</button>';
+    el.querySelector('.buy-btn').onclick = () => buyItem(item);
+    list.appendChild(el);
+  });
+}
+
+// 동기화 상태 표시 갱신
+function setSync(kind){
+  const el = $('#syncStatus');
+  el.className = 'sync-status ' + kind;
+  el.textContent =
+    kind === 'saving' ? '동기화 중…' :
+    kind === 'saved'  ? '☁️ 클라우드에 저장됨' :
+    kind === 'error'  ? '⚠️ 저장 실패 (인터넷 확인)' :
+    kind === 'local'  ? '💾 이 기기에만 저장 (동기화 설정 전)' : '';
+}
+
+// 전체 다시 그리기 + 저장
+async function renderAll(){
+  renderTopbar(); renderHome(); renderHistory(); renderDogam(); renderShop();
+  await Store.save(STATE, setSync);
+}
+
+/* ============================================================
+   6) 퀴즈 진행
+   ============================================================ */
+const modalBg = $('#modalBg');
+const modalContent = $('#modalContent');
+let quiz = null;
+
+function openQuestQuiz(qz){
+  quiz = { type:'quest', data:qz, idx:0, questions:qz.questions };
+  showStory(null, qz.subject + ' 퀘스트', () => showQuestion());
+}
+function openHistoryStage(st){
+  quiz = { type:'history', data:st, idx:0, questions:st.questions };
+  showStory(st.story, st.era + ' 이야기', () => showQuestion());
+}
+
+function showStory(story, tag, onNext){
+  openModal();
+  if (!story){ onNext(); return; }
+  modalContent.innerHTML =
+    '<div class="modal-head"><span class="tag">📖 ' + tag + '</span><button class="x" id="closeX">✕</button></div>' +
+    '<div class="story">' + story + '</div>' +
+    '<button class="tts-btn" id="ttsStory">🔊 읽어주기</button>' +
+    '<button class="next-btn" id="storyNext">퀴즈 시작! 🚀</button>';
+  $('#closeX').onclick = closeModal;
+  $('#ttsStory').onclick = () => speak(story);
+  $('#storyNext').onclick = onNext;
+  speak(story);
+}
+
+function showQuestion(){
+  const cur = quiz.questions[quiz.idx];
+  const total = quiz.questions.length;
+  let dots = '';
+  for (let i=0;i<total;i++) dots += '<i class="' + (i<=quiz.idx?'on':'') + '"></i>';
+  let opts = '';
+  cur.options.forEach((o,i) => { opts += '<button class="opt" data-i="' + i + '">' + o + '</button>'; });
+  modalContent.innerHTML =
+    '<div class="modal-head"><span class="tag">문제 ' + (quiz.idx+1) + ' / ' + total + '</span><button class="x" id="closeX">✕</button></div>' +
+    '<div class="progress-dots">' + dots + '</div>' +
+    '<div class="qtext">' + cur.q + '</div>' +
+    '<button class="tts-btn" id="ttsQ">🔊 문제 읽어주기</button>' +
+    '<div class="options" id="opts">' + opts + '</div>' +
+    '<div class="feedback" id="feedback"></div>';
+  $('#closeX').onclick = closeModal;
+  $('#ttsQ').onclick = () => speak(cur.q);
+  $('#opts').querySelectorAll('.opt').forEach(btn => {
+    btn.onclick = () => checkAnswer(parseInt(btn.dataset.i), cur);
+  });
+}
+
+function checkAnswer(picked, cur){
+  const btns = $('#opts').querySelectorAll('.opt');
+  btns.forEach(b => b.disabled = true);
+  const correct = picked === cur.answer;
+  btns[picked].classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) btns[cur.answer].classList.add('correct');
+  const fb = $('#feedback'); fb.classList.add('show');
+  if (correct){
+    fb.innerHTML =
+      '<div class="big" style="color:var(--mint)">정답이에요! 🎉</div>' +
+      '<button class="next-btn" id="nextQ">' + (quiz.idx+1 < quiz.questions.length ? '다음 문제 ▶' : '보상 받기 🎁') + '</button>';
+    $('#nextQ').onclick = nextQuestion;
+  } else {
+    fb.innerHTML =
+      '<div class="big" style="color:var(--coral)">아깝다! 다시 도전해볼까? 💪</div>' +
+      '<div class="hint">💡 힌트: ' + cur.hint + '</div>' +
+      '<button class="next-btn" id="retryQ" style="background:var(--mint);box-shadow:0 5px 0 #35a07f">다시 풀기 🔁</button>';
+    $('#retryQ').onclick = () => showQuestion();
+  }
+}
+
+function nextQuestion(){
+  quiz.idx += 1;
+  if (quiz.idx < quiz.questions.length) showQuestion(); else finishQuiz();
+}
+
+async function finishQuiz(){
+  let gainG, gainE, popEmoji, popTitle, extra = '';
+  if (quiz.type === 'quest'){
+    const qz = quiz.data; gainG = qz.reward; gainE = qz.reward;
+    if (!STATE.doneQuests.includes(qz.id)) STATE.doneQuests.push(qz.id);
+    popEmoji = qz.icon; popTitle = qz.title + ' 완료!';
+  } else {
+    const st = quiz.data; gainG = st.reward; gainE = st.reward;
+    const firstClear = !STATE.clearedStages.includes(st.id);
+    if (firstClear){
+      STATE.clearedStages.push(st.id); STATE.cards.push(st.id);
+      extra = '<div class="gain">🃏 [' + st.card.name + '] 카드 획득!</div>';
+    }
+    popEmoji = st.card.emoji; popTitle = st.era + ' 클리어!';
+  }
+  grant(gainE, gainG);
+  await renderAll();
+  modalContent.innerHTML =
+    '<div class="reward-pop"><div class="emoji">' + popEmoji + '</div>' +
+    '<div class="title">' + popTitle + '</div>' +
+    '<div class="gain">🪙 +' + gainG + '   ⭐ +' + gainE + '</div>' + extra +
+    '<button class="next-btn" id="doneBtn" style="margin-top:20px">좋아! 계속하기 ✨</button></div>';
+  $('#doneBtn').onclick = closeModal;
+}
+
+async function buyItem(item){
+  if (STATE.gold < item.price){ toast('골드가 부족해요 🪙'); return; }
+  STATE.gold -= item.price; STATE.boughtLog.push(item.id);
+  await renderAll();
+  toast(item.emoji + ' ' + item.name + ' 교환 완료!');
+}
+
+/* ============================================================
+   7) 유틸: 모달 / 음성 / 토스트 / 탭
+   ============================================================ */
+function openModal(){ modalBg.classList.add('open'); }
+function closeModal(){ modalBg.classList.remove('open'); stopSpeak(); }
+modalBg.onclick = (e) => { if (e.target === modalBg) closeModal(); };
+
+function speak(text){
+  if (!('speechSynthesis' in window)) return;
+  stopSpeak();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR'; u.rate = 0.95;
+  window.speechSynthesis.speak(u);
+}
+function stopSpeak(){ if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    $('#screen-' + tab.dataset.screen).classList.add('active');
+  };
+});
+
+$('#resetBtn').onclick = async () => {
+  if (confirm('이 탐험가의 기록을 모두 지우고 처음부터 다시 시작할까요?')){
+    STATE = defaultState();
+    await Store.clear();
+    if (Store.hasLocal) localStorage.removeItem('explorer_last_code');
+    location.reload(); // 로그인 화면으로 되돌아감
+  }
+};
+
+/* ============================================================
+   8) 로그인 → 앱 시작
+   ============================================================ */
+// 코드로 로그인하고 데이터 불러와 앱 시작
+async function startWithCode(code){
+  const saved = await Store.login(code);
+  STATE = saved ? Object.assign(defaultState(), saved) : defaultState();
+  $('#loginScreen').style.display = 'none';   // 로그인 화면 숨김
+  await renderAll();
+}
+
+// 로그인 버튼
+$('#loginBtn').onclick = () => {
+  const code = $('#codeInput').value.trim();
+  if (!code){ $('#codeInput').focus(); return; }
+  startWithCode(code);
+};
+// 엔터로도 로그인
+$('#codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#loginBtn').click(); });
+
+// 페이지 시작
+(function boot(){
+  Cloud.init();
+  // 로그인 화면에 현재 저장 모드 안내
+  $('#loginMode').textContent = Cloud.ready
+    ? '☁️ 클라우드 동기화 켜짐 · 여러 기기에서 이어서 할 수 있어요'
+    : '💾 이 기기에만 저장 중 · Firebase 설정을 넣으면 기기 간 동기화돼요';
+
+  // 지난번에 쓴 코드가 있으면 자동 로그인
+  const last = Store.hasLocal ? localStorage.getItem('explorer_last_code') : null;
+  if (last){ startWithCode(last); }
+})();
+</script>
+</body>
+</html>
