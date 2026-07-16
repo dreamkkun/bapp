@@ -432,7 +432,7 @@ const DAILY_MESSAGES = [
 
 // answer = options 배열의 인덱스(0부터 시작)
 const QUESTS = [
-  { id:'math1', subject:'수학', icon:'🔢', title:'보물상자 비밀번호', desc:'큰 수 · 곱셈으로 자물쇠 열기', reward:30,
+  { id:'math1', subject:'수학', icon:'🔢', title:'보물상자 비밀번호', desc:'큰 수 · 곱셈으로 자물쇠 열기',
     questions:[
       { q:'350 × 20 은 얼마일까요?', options:['700','7,000','70,000'], answer:1, hint:'35 × 2 = 70 을 먼저 구하고, 뒤에 0을 두 개 붙여봐!' },
       { q:'숫자 "육만 오천"을 바르게 쓴 것은?', options:['6,500','65,000','650,000'], answer:1, hint:'만(10000)이 6개, 천(1000)이 5개 있어요.' },
@@ -443,7 +443,7 @@ const QUESTS = [
       { q:'306 × 4 는 얼마일까요?', options:['1,224','1,204','12,240'], answer:0, hint:'300×4=1200, 6×4=24를 더해봐요.' },
       { q:'2,340 × 20 은 얼마일까요?', options:['46,800','23,400','4,680'], answer:0, hint:'234×2=468 을 구하고 0을 세 개 붙여봐요.', hard:true }
     ] },
-  { id:'math2', subject:'수학', icon:'📐', title:'각도 다이얼 맞추기', desc:'각의 크기 알아맞히기', reward:30,
+  { id:'math2', subject:'수학', icon:'📐', title:'각도 다이얼 맞추기', desc:'각의 크기 알아맞히기',
     questions:[
       { q:'직각(ㄱ자 모양)은 몇 도일까요?', options:['45도','90도','180도'], answer:1, hint:'책 모서리처럼 반듯하게 꺾인 각이 직각이에요.' },
       { q:'120도는 어떤 각일까요?', options:['예각(작은 각)','직각','둔각(큰 각)'], answer:2, hint:'90도보다 크면 둔각, 작으면 예각이에요.' },
@@ -454,7 +454,7 @@ const QUESTS = [
       { q:'일직선을 이루는 각은 몇 도일까요?', options:['90도','180도','270도'], answer:1, hint:'일직선은 평각이라고도 하며 180도예요.' },
       { q:'시계가 6시를 가리킬 때 시침과 분침이 이루는 각도는?', options:['180도','90도','360도'], answer:0, hint:'6시는 시계를 반 바퀴 돈 위치예요.', hard:true }
     ] },
-  { id:'sci1', subject:'과학', icon:'🧲', title:'혼합물 분리 실험실', desc:'섞인 것을 분리하는 방법', reward:30,
+  { id:'sci1', subject:'과학', icon:'🧲', title:'혼합물 분리 실험실', desc:'섞인 것을 분리하는 방법',
     questions:[
       { q:'철가루와 모래가 섞였어요. 철가루만 골라내려면?', options:['체로 거르기','자석 사용하기','물에 넣기'], answer:1, hint:'철은 자석에 붙는 성질이 있어요!' },
       { q:'소금물에서 소금을 다시 얻으려면 어떻게 할까요?', options:['물을 증발시키기','자석 붙이기','체로 거르기'], answer:0, hint:'물이 날아가면 소금만 남아요.' },
@@ -465,7 +465,7 @@ const QUESTS = [
       { q:'설탕물에서 설탕을 다시 얻는 방법은?', options:['물을 증발시키기','자석 사용하기','체로 거르기'], answer:0, hint:'물이 사라지면 설탕만 남아요.' },
       { q:'거름종이로 흙탕물을 걸렀을 때 거름종이에 남는 것은?', options:['흙(찌꺼기)','맑은 물','공기'], answer:0, hint:'거름종이는 작은 구멍으로 물은 통과시키고 큰 알갱이는 걸러요.', hard:true }
     ] },
-  { id:'sci2', subject:'과학', icon:'🌱', title:'식물의 한살이', desc:'씨앗에서 열매까지', reward:30,
+  { id:'sci2', subject:'과학', icon:'🌱', title:'식물의 한살이', desc:'씨앗에서 열매까지',
     questions:[
       { q:'식물의 한살이 순서로 맞는 것은?', options:['씨 → 싹 → 꽃 → 열매','꽃 → 씨 → 싹 → 열매','열매 → 꽃 → 싹 → 씨'], answer:0, hint:'씨앗을 심으면 가장 먼저 싹이 나요.' },
       { q:'씨가 싹트는 데 꼭 필요한 것이 아닌 것은?', options:['물','알맞은 온도','텔레비전'], answer:2, hint:'식물은 물과 따뜻함이 필요하지 기계는 필요 없어요!' },
@@ -476,7 +476,7 @@ const QUESTS = [
       { q:'꽃이 피고 나서 벌과 나비가 하는 중요한 일은?', options:['꽃가루를 옮겨줘요','잎을 먹어요','뿌리를 잘라요'], answer:0, hint:'꽃가루받이(수분)를 도와줘요.' },
       { q:'한해살이 식물과 여러해살이 식물의 차이로 알맞은 것은?', options:['한해살이는 한 해만 살고 죽어요','한해살이가 더 오래 살아요','둘 다 똑같아요'], answer:0, hint:'"한 해"만 사는 식물이라서 한해살이예요.', hard:true }
     ] },
-  { id:'soc1', subject:'사회', icon:'🗺️', title:'우리 지역 탐험', desc:'지도와 지역의 중심지', reward:30,
+  { id:'soc1', subject:'사회', icon:'🗺️', title:'우리 지역 탐험', desc:'지도와 지역의 중심지',
     questions:[
       { q:'사람들이 많이 모이고 물건을 사고파는 지역의 중심을 뭐라고 할까요?', options:['중심지','논밭','바닷가'], answer:0, hint:'시장, 버스터미널, 관공서가 모여 있는 곳이에요.' },
       { q:'지도에서 위쪽은 보통 어느 방향일까요?', options:['남쪽','동쪽','북쪽'], answer:2, hint:'지도는 특별한 표시가 없으면 위가 북쪽이에요.' },
@@ -490,7 +490,7 @@ const QUESTS = [
 ];
 
 const HISTORY = [
-  { id:'h1', num:1, era:'고조선', flag:'🐻', reward:40,
+  { id:'h1', num:1, era:'고조선', flag:'🐻',
     card:{ emoji:'👑', name:'단군왕검', desc:'우리나라 첫 나라 고조선을 세운 임금' },
     story:'아주 먼 옛날, 곰과 호랑이가 사람이 되고 싶어 했어요. 곰은 어두운 동굴에서 참고 견뎌 사람(웅녀)이 되었고, 훗날 단군왕검이 태어나 우리나라 최초의 나라 고조선을 세웠답니다.',
     questions:[
@@ -503,7 +503,7 @@ const HISTORY = [
       { q:'단군왕검 이야기가 전해지는 책은 무엇일까요?', options:['삼국유사','훈민정음','동의보감'], answer:0, hint:'고려 시대 승려 일연이 쓴 역사책이에요.' },
       { q:'고조선이 만들어진 곳은 오늘날 어느 지역과 가까울까요?', options:['한반도 북부와 만주 지역','제주도','일본'], answer:0, hint:'한반도 북쪽과 중국 동북쪽(만주) 지역이에요.', hard:true }
     ] },
-  { id:'h2', num:2, era:'삼국시대', flag:'🐎', reward:40,
+  { id:'h2', num:2, era:'삼국시대', flag:'🐎',
     card:{ emoji:'🛡️', name:'광개토대왕', desc:'고구려의 땅을 크게 넓힌 정복왕' },
     story:'고구려에는 아주 용맹한 왕이 있었어요. 이름처럼 나라의 땅(영토)을 크게 넓힌 광개토대왕이에요. 북쪽으로 힘차게 나아가 고구려를 동아시아 최강국으로 만들었답니다.',
     questions:[
@@ -516,7 +516,7 @@ const HISTORY = [
       { q:'고구려는 삼국 중 어느 방향에 있었을까요?', options:['북쪽','남쪽','서쪽 바다'], answer:0, hint:'한반도 북쪽과 만주 지역을 차지했어요.' },
       { q:'광개토대왕릉비는 어느 나라에 있을까요?', options:['중국(옛 고구려 땅)','일본','한국 서울'], answer:0, hint:'지금의 중국 지린성(옛 고구려 수도 부근)에 있어요.', hard:true }
     ] },
-  { id:'h3', num:3, era:'신라', flag:'🌸', reward:40,
+  { id:'h3', num:3, era:'신라', flag:'🌸',
     card:{ emoji:'🌼', name:'선덕여왕', desc:'신라를 다스린 지혜로운 첫 여왕' },
     story:'신라에는 우리나라 최초의 여왕, 선덕여왕이 있었어요. 어릴 때 모란꽃 그림을 보고 "벌·나비가 없으니 향기가 없겠구나"라고 알아맞혔을 만큼 지혜로웠대요. 별을 관찰하는 첨성대도 이때 만들어졌어요.',
     questions:[
@@ -529,7 +529,7 @@ const HISTORY = [
       { q:'신라의 수도는 어디였을까요?', options:['경주','평양','서울'], answer:0, hint:'지금도 신라 유적이 많이 남아있는 도시예요.' },
       { q:'선덕여왕 다음으로 왕위에 오른 신라의 두 번째 여왕은?', options:['진덕여왕','진성여왕','문무왕'], answer:0, hint:'선덕여왕의 사촌 동생이었어요.', hard:true }
     ] },
-  { id:'h4', num:4, era:'고려', flag:'🏹', reward:40,
+  { id:'h4', num:4, era:'고려', flag:'🏹',
     card:{ emoji:'⚔️', name:'강감찬', desc:'귀주대첩에서 거란을 물리친 장군' },
     story:'고려에 거란(외적)이 쳐들어왔어요. 강감찬 장군은 지혜로운 작전을 세워 귀주라는 곳에서 크게 승리했어요. 이 큰 승리를 "귀주대첩"이라고 불러요.',
     questions:[
@@ -542,7 +542,7 @@ const HISTORY = [
       { q:'강감찬 장군이 활약한 시기의 고려 왕은?', options:['현종','태조 왕건','공민왕'], answer:0, hint:'거란의 3차 침입 때 고려를 다스리던 왕이에요.' },
       { q:'강감찬 장군이 강물을 막았다가 터뜨려 적을 물리친 곳은 어디였을까요?', options:['귀주(구주)','한강','대동강'], answer:0, hint:'귀주대첩이라는 이름의 유래가 된 지역이에요.', hard:true }
     ] },
-  { id:'h5', num:5, era:'조선', flag:'📜', reward:50,
+  { id:'h5', num:5, era:'조선', flag:'📜',
     card:{ emoji:'📜', name:'세종대왕', desc:'한글(훈민정음)을 만든 조선의 임금' },
     story:'조선의 세종대왕은 백성들이 글을 몰라 힘들어하는 걸 안타까워했어요. 그래서 누구나 쉽게 배울 수 있는 글자, 훈민정음(한글)을 만들었어요. 지금 우리가 쓰는 바로 그 한글이에요!',
     questions:[
@@ -629,7 +629,7 @@ function renderHome(){
       '<div class="q-icon">' + qz.icon + '</div>' +
       '<div class="q-body"><b>' + qz.title + '</b><p>' + qz.subject + ' · ' + qz.desc + '</p></div>' +
       (done ? '<div class="q-check">✅</div>'
-            : '<div class="q-reward">🪙+' + qz.reward + '<br>⭐+' + qz.reward + '</div>');
+            : '<div class="q-reward">🪙+' + (QUESTION_REWARD*SESSION_SIZE) + '<br>⭐+' + (QUESTION_REWARD*SESSION_SIZE) + '</div>');
     el.onclick = () => openQuestQuiz(qz);
     list.appendChild(el);
   });
@@ -710,12 +710,17 @@ const modalBg = $('#modalBg');
 const modalContent = $('#modalContent');
 let quiz = null;
 
+const SESSION_SIZE = 5;      // 한 판에 보여줄 문제 수
+const QUESTION_REWARD = 5;   // 새로 맞힌 문제 1개당 포인트
+
 function openQuestQuiz(qz){
-  quiz = { type:'quest', data:qz, idx:0, questions:buildSession(qz, 5) };
+  const session = buildSession(qz, SESSION_SIZE);
+  quiz = { type:'quest', data:qz, idx:0, questions:session, perReward:QUESTION_REWARD, earned:0 };
   showStory(null, qz.subject + ' 퀘스트', () => showQuestion());
 }
 function openHistoryStage(st){
-  quiz = { type:'history', data:st, idx:0, questions:buildSession(st, 5) };
+  const session = buildSession(st, SESSION_SIZE);
+  quiz = { type:'history', data:st, idx:0, questions:session, perReward:QUESTION_REWARD, earned:0 };
   showStory(st.story, st.era + ' 이야기', () => showQuestion());
 }
 
@@ -764,9 +769,19 @@ async function checkAnswer(picked, cur){
   if (!correct) btns[cur.answer].classList.add('correct');
   const fb = $('#feedback'); fb.classList.add('show');
   if (correct){
-    if (!STATE.doneQ.includes(cur.id)) STATE.doneQ.push(cur.id);
+    const isNew = !STATE.doneQ.includes(cur.id);
+    if (isNew){
+      STATE.doneQ.push(cur.id);
+      grant(quiz.perReward, quiz.perReward);
+      quiz.earned += quiz.perReward;
+      renderTopbar();
+      await Store.save(STATE, setSync);
+    }
     fb.innerHTML =
       '<div class="big" style="color:var(--mint)">정답이에요! 🎉</div>' +
+      (isNew
+        ? '<div class="hint" style="color:var(--gold)">🪙+' + quiz.perReward + ' ⭐+' + quiz.perReward + '</div>'
+        : '<div class="hint">이미 맞혔던 문제라 포인트는 없어요</div>') +
       '<button class="next-btn" id="nextQ">' + (quiz.idx+1 < quiz.questions.length ? '다음 문제 ▶' : '보상 받기 🎁') + '</button>';
     $('#nextQ').onclick = nextQuestion;
   } else {
@@ -790,13 +805,14 @@ function nextQuestion(){
 }
 
 async function finishQuiz(){
-  let gainG, gainE, popEmoji, popTitle, extra = '';
+  const gain = quiz.earned; // 이번 세션에서 "새로 맞힌" 문제로 얻은 포인트(복습만 했다면 0)
+  let popEmoji, popTitle, extra = '';
   if (quiz.type === 'quest'){
-    const qz = quiz.data; gainG = qz.reward; gainE = qz.reward;
+    const qz = quiz.data;
     if (!STATE.doneQuests.includes(qz.id)) STATE.doneQuests.push(qz.id);
     popEmoji = qz.icon; popTitle = qz.title + ' 완료!';
   } else {
-    const st = quiz.data; gainG = st.reward; gainE = st.reward;
+    const st = quiz.data;
     const firstClear = !STATE.clearedStages.includes(st.id);
     if (firstClear){
       STATE.clearedStages.push(st.id); STATE.cards.push(st.id);
@@ -804,12 +820,14 @@ async function finishQuiz(){
     }
     popEmoji = st.card.emoji; popTitle = st.era + ' 클리어!';
   }
-  grant(gainE, gainG);
   await renderAll();
   modalContent.innerHTML =
     '<div class="reward-pop"><div class="emoji">' + popEmoji + '</div>' +
     '<div class="title">' + popTitle + '</div>' +
-    '<div class="gain">🪙 +' + gainG + '   ⭐ +' + gainE + '</div>' + extra +
+    (gain > 0
+      ? '<div class="gain">🪙 +' + gain + '   ⭐ +' + gain + '</div>'
+      : '<div class="gain" style="color:var(--muted)">복습 완료! (이미 맞혔던 문제라 추가 포인트는 없어요)</div>') +
+    extra +
     '<button class="next-btn" id="doneBtn" style="margin-top:20px">좋아! 계속하기 ✨</button></div>';
   $('#doneBtn').onclick = closeModal;
 }
