@@ -590,7 +590,7 @@ const SHOP = [
    4) 게임 상태 & 핵심 로직
    ============================================================ */
 function defaultState(){
-  return { level:1, exp:0, gold:0, doneQuests:[], clearedStages:[], cards:[], boughtLog:[], wrongQ:[], doneQ:[] };
+  return { level:1, exp:0, gold:0, doneQuests:[], clearedStages:[], cards:[], boughtLog:[], wrongQ:[], doneQ:[], lastAttendance:null, streak:0 };
 }
 let STATE = defaultState();
 const LV_EXP = 500;
@@ -898,12 +898,40 @@ $('#resetBtn').onclick = async () => {
 /* ============================================================
    8) 로그인 → 앱 시작
    ============================================================ */
+// 출석 체크: 오늘 처음 접속이면 골드 지급, 5일 연속이면 보너스 추가
+function checkAttendance(){
+  const today = new Date().toDateString();
+  if (STATE.lastAttendance === today) return null; // 오늘은 이미 받음
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  STATE.streak = (STATE.lastAttendance === y.toDateString()) ? STATE.streak + 1 : 1;
+  STATE.lastAttendance = today;
+  const bonus = (STATE.streak % 5 === 0) ? 30 : 0;
+  const gain = 10 + bonus;
+  STATE.gold += gain;
+  return { gain, bonus, streak: STATE.streak };
+}
+
+// 출석 보상 팝업
+function showAttendanceReward(att){
+  openModal();
+  modalContent.innerHTML =
+    '<div class="reward-pop"><div class="emoji">📅</div>' +
+    '<div class="title">오늘도 출석 완료!</div>' +
+    '<div class="gain">🪙 +10</div>' +
+    (att.bonus > 0 ? '<div class="gain">🔥 ' + att.streak + '일 연속 출석 보너스! 🪙 +' + att.bonus + '</div>' : '') +
+    '<div style="color:var(--muted);font-size:13px;margin-top:8px">연속 출석 ' + att.streak + '일째</div>' +
+    '<button class="next-btn" id="attDone" style="margin-top:20px">시작하기 ✨</button></div>';
+  $('#attDone').onclick = closeModal;
+}
+
 // 코드로 로그인하고 데이터 불러와 앱 시작
 async function startWithCode(code){
   const saved = await Store.login(code);
   STATE = saved ? Object.assign(defaultState(), saved) : defaultState();
   $('#loginScreen').style.display = 'none';   // 로그인 화면 숨김
+  const att = checkAttendance();
   await renderAll();
+  if (att) showAttendanceReward(att);
 }
 
 // 로그인 버튼
