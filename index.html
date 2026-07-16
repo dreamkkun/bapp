@@ -476,13 +476,16 @@ const QUESTS = [
 ];
 
 // 역사 인물 초상화풍 일러스트(SVG) 생성기 — 실제 초상화를 본떠 그린 원본 일러스트
-// o: { bg, skin, skinDark, hair, hairDark, robe, robeDark, headwear, beard }
+// o: { bg, bgDark, skin, skinDark, hair, hairDark, robe, robeDark, headwear, beard }
 function portraitSVG(id, o){
   const headwear = o.headwear || '';
   const beard = o.beard || '';
   return '<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
-      '<linearGradient id="' + id + 'sk" x1="0" y1="0" x2="0" y2="1">' +
+      '<radialGradient id="' + id + 'bg" cx="50%" cy="35%" r="75%">' +
+        '<stop offset="0%" stop-color="' + o.bg + '"/><stop offset="100%" stop-color="' + o.bgDark + '"/>' +
+      '</radialGradient>' +
+      '<linearGradient id="' + id + 'sk" x1="0.3" y1="0" x2="0.7" y2="1">' +
         '<stop offset="0%" stop-color="' + o.skin + '"/><stop offset="100%" stop-color="' + o.skinDark + '"/>' +
       '</linearGradient>' +
       '<linearGradient id="' + id + 'rb" x1="0" y1="0" x2="1" y2="1">' +
@@ -492,20 +495,29 @@ function portraitSVG(id, o){
         '<stop offset="0%" stop-color="' + o.hair + '"/><stop offset="100%" stop-color="' + o.hairDark + '"/>' +
       '</linearGradient>' +
     '</defs>' +
-    '<rect x="4" y="4" width="192" height="232" rx="10" fill="' + o.bg + '" stroke="#c99b2f" stroke-width="4"/>' +
-    '<path d="M20 236 C20 175 45 152 100 152 C155 152 180 175 180 236 Z" fill="url(#' + id + 'rb)"/>' +
-    '<path d="M100 152 L78 182 L100 206 L122 182 Z" fill="' + o.robeDark + '" opacity=".55"/>' +
-    '<rect x="86" y="132" width="28" height="30" rx="10" fill="url(#' + id + 'sk)"/>' +
-    '<ellipse cx="62" cy="128" rx="7" ry="10" fill="url(#' + id + 'sk)"/>' +
-    '<ellipse cx="138" cy="128" rx="7" ry="10" fill="url(#' + id + 'sk)"/>' +
-    '<circle cx="100" cy="108" r="52" fill="url(#' + id + 'sk)"/>' +
-    '<path d="M50 108 Q48 52 100 48 Q152 52 150 108 L150 92 Q150 62 100 58 Q50 62 50 92 Z" fill="url(#' + id + 'hr)"/>' +
-    '<path d="M74 100 Q84 92 96 98" stroke="' + o.hairDark + '" stroke-width="4" fill="none" stroke-linecap="round"/>' +
-    '<path d="M126 100 Q116 92 104 98" stroke="' + o.hairDark + '" stroke-width="4" fill="none" stroke-linecap="round"/>' +
-    '<ellipse cx="82" cy="112" rx="9" ry="6" fill="#fff"/><circle cx="83" cy="112" r="4" fill="#241a12"/><circle cx="85" cy="110" r="1.4" fill="#fff"/>' +
-    '<ellipse cx="118" cy="112" rx="9" ry="6" fill="#fff"/><circle cx="117" cy="112" r="4" fill="#241a12"/><circle cx="119" cy="110" r="1.4" fill="#fff"/>' +
-    '<path d="M100 112 Q96 128 100 132 Q104 130 102 126" stroke="' + o.skinDark + '" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
-    '<path d="M86 144 Q100 152 114 144 Q100 150 86 144 Z" fill="#B85C5C"/>' +
+    '<rect x="4" y="4" width="192" height="232" rx="10" fill="url(#' + id + 'bg)" stroke="#c99b2f" stroke-width="4"/>' +
+    '<path d="M18 236 C18 172 44 148 100 148 C156 148 182 172 182 236 Z" fill="url(#' + id + 'rb)"/>' +
+    '<path d="M40 236 C42 195 58 168 82 156" stroke="' + o.robeDark + '" stroke-width="5" fill="none" opacity=".4" stroke-linecap="round"/>' +
+    '<path d="M160 236 C158 195 142 168 118 156" stroke="' + o.robeDark + '" stroke-width="5" fill="none" opacity=".4" stroke-linecap="round"/>' +
+    '<path d="M100 148 L76 180 L100 206 L124 180 Z" fill="' + o.robeDark + '" opacity=".6"/>' +
+    '<path d="M84 128 L84 158 Q100 168 116 158 L116 128 Z" fill="url(#' + id + 'sk)"/>' +
+    '<ellipse cx="58" cy="122" rx="7" ry="11" fill="url(#' + id + 'sk)"/>' +
+    '<ellipse cx="142" cy="122" rx="7" ry="11" fill="url(#' + id + 'sk)"/>' +
+    '<path d="M58 96 Q56 138 66 160 Q80 178 100 178 Q120 178 134 160 Q144 138 142 96 Q142 52 100 46 Q58 52 58 96 Z" fill="url(#' + id + 'sk)"/>' +
+    '<ellipse cx="86" cy="88" rx="26" ry="20" fill="#fff" opacity=".10"/>' +
+    '<path d="M70 156 Q100 180 130 156 Q118 172 100 174 Q82 172 70 156 Z" fill="' + o.skinDark + '" opacity=".4"/>' +
+    '<path d="M52 100 Q48 46 100 42 Q152 46 148 100 L148 84 Q148 56 100 52 Q52 56 52 84 Z" fill="url(#' + id + 'hr)"/>' +
+    '<path d="M56 78 Q60 60 74 52" stroke="' + o.hairDark + '" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>' +
+    '<path d="M144 78 Q140 60 126 52" stroke="' + o.hairDark + '" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>' +
+    '<path d="M70 96 Q82 86 96 94" stroke="' + o.hairDark + '" stroke-width="4.5" fill="none" stroke-linecap="round"/>' +
+    '<path d="M130 96 Q118 86 104 94" stroke="' + o.hairDark + '" stroke-width="4.5" fill="none" stroke-linecap="round"/>' +
+    '<path d="M70 108 Q82 99 96 108 Q84 118 70 108 Z" fill="#fff"/><circle cx="83" cy="108" r="4.4" fill="#3b2a1e"/><circle cx="83" cy="108" r="2" fill="#111"/><circle cx="85" cy="106" r="1.3" fill="#fff"/>' +
+    '<path d="M130 108 Q118 99 104 108 Q116 118 130 108 Z" fill="#fff"/><circle cx="117" cy="108" r="4.4" fill="#3b2a1e"/><circle cx="117" cy="108" r="2" fill="#111"/><circle cx="119" cy="106" r="1.3" fill="#fff"/>' +
+    '<path d="M100 110 Q95 128 100 134 Q105 132 103 128" stroke="' + o.skinDark + '" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
+    '<ellipse cx="72" cy="128" rx="9" ry="6" fill="#FF9AA2" opacity=".28"/>' +
+    '<ellipse cx="128" cy="128" rx="9" ry="6" fill="#FF9AA2" opacity=".28"/>' +
+    '<path d="M84 148 Q100 144 116 148 Q100 152 84 148 Z" fill="#B0524E"/>' +
+    '<path d="M86 149 Q100 156 114 149 Q100 154 86 149 Z" fill="#D97D72"/>' +
     beard + headwear +
     '</svg>';
 }
@@ -513,9 +525,9 @@ function portraitSVG(id, o){
 const HISTORY = [
   { id:'h1', num:1, era:'고조선', flag:'🐻', reward:40,
     card:{ emoji:'👑', name:'단군왕검', desc:'우리나라 첫 나라 고조선을 세운 임금',
-      art:portraitSVG('h1', { bg:'#cbd3e0', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#3a5aa8', robeDark:'#1f3568',
+      art:portraitSVG('h1', { bg:'#cbd3e0', bgDark:'#98a5bd', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#3a5aa8', robeDark:'#1f3568',
         headwear:'<path d="M58 78 L66 40 L82 62 L100 30 L118 62 L134 40 L142 78 Z" fill="#F6C453" stroke="#c99b2f" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="58" r="6" fill="#FF7A59"/>',
-        beard:'<path d="M64 128 Q58 176 78 202 Q90 216 100 216 Q110 216 122 202 Q142 176 136 128 Q124 150 100 152 Q76 150 64 128 Z" fill="url(#h1hr)"/>' }) },
+        beard:'<path d="M66 132 Q60 182 80 210 Q90 224 100 224 Q110 224 120 210 Q140 182 134 132 Q122 158 100 160 Q78 158 66 132 Z" fill="url(#h1hr)"/>' }) },
     story:'아주 먼 옛날, 곰과 호랑이가 사람이 되고 싶어 했어요. 곰은 어두운 동굴에서 참고 견뎌 사람(웅녀)이 되었고, 훗날 단군왕검이 태어나 우리나라 최초의 나라 고조선을 세웠답니다.',
     questions:[
       { q:'곰이 사람이 되려고 동굴에서 먹은 것은?', options:['마늘과 쑥','배추와 무','사과와 배'], answer:0, hint:'맵고 쓴 두 가지 채소예요.' },
@@ -526,7 +538,7 @@ const HISTORY = [
     ] },
   { id:'h2', num:2, era:'삼국시대', flag:'🐎', reward:40,
     card:{ emoji:'🛡️', name:'광개토대왕', desc:'고구려의 땅을 크게 넓힌 정복왕',
-      art:portraitSVG('h2', { bg:'#d9cfc7', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#8a3232', robeDark:'#4d1a1a',
+      art:portraitSVG('h2', { bg:'#d9cfc7', bgDark:'#ab9a8a', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#8a3232', robeDark:'#4d1a1a',
         headwear:'<path d="M48 100 Q48 46 100 42 Q152 46 152 100 Q152 78 100 72 Q48 78 48 100 Z" fill="#9aa0ab" stroke="#5b6068" stroke-width="3"/>' +
           '<path d="M48 96 L40 122 L58 112 Z" fill="#9aa0ab" stroke="#5b6068" stroke-width="2"/><path d="M152 96 L160 122 L142 112 Z" fill="#9aa0ab" stroke="#5b6068" stroke-width="2"/>' +
           '<rect x="94" y="16" width="12" height="30" rx="4" fill="#B03A3A"/>' }) },
@@ -540,7 +552,7 @@ const HISTORY = [
     ] },
   { id:'h3', num:3, era:'신라', flag:'🌸', reward:40,
     card:{ emoji:'🌼', name:'선덕여왕', desc:'신라를 다스린 지혜로운 첫 여왕',
-      art:portraitSVG('h3', { bg:'#e8d7dc', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#c65d7b', robeDark:'#8a3550',
+      art:portraitSVG('h3', { bg:'#e8d7dc', bgDark:'#c7a4b1', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#c65d7b', robeDark:'#8a3550',
         headwear:'<path d="M60 64 Q100 20 140 64" stroke="#F6C453" stroke-width="5" fill="none"/>' +
           '<circle cx="100" cy="18" r="9" fill="#FF9AA2"/><circle cx="72" cy="40" r="6" fill="#F6C453"/><circle cx="128" cy="40" r="6" fill="#F6C453"/>' }) },
     story:'신라에는 우리나라 최초의 여왕, 선덕여왕이 있었어요. 어릴 때 모란꽃 그림을 보고 "벌·나비가 없으니 향기가 없겠구나"라고 알아맞혔을 만큼 지혜로웠대요. 별을 관찰하는 첨성대도 이때 만들어졌어요.',
@@ -553,10 +565,10 @@ const HISTORY = [
     ] },
   { id:'h4', num:4, era:'고려', flag:'🏹', reward:40,
     card:{ emoji:'⚔️', name:'강감찬', desc:'귀주대첩에서 거란을 물리친 장군',
-      art:portraitSVG('h4', { bg:'#d3d9cf', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#4a6b4a', robeDark:'#233d23',
+      art:portraitSVG('h4', { bg:'#d3d9cf', bgDark:'#9fac99', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#4a6b4a', robeDark:'#233d23',
         headwear:'<path d="M48 100 Q48 44 100 40 Q152 44 152 100 Q152 76 100 70 Q48 76 48 100 Z" fill="#5b6068" stroke="#333" stroke-width="3"/>' +
           '<path d="M46 96 L38 118 L54 112 Z" fill="#5b6068"/><path d="M154 96 L162 118 L146 112 Z" fill="#5b6068"/>',
-        beard:'<path d="M70 138 Q100 130 130 138 Q134 156 120 172 Q110 182 100 182 Q90 182 80 172 Q66 156 70 138 Z" fill="url(#h4hr)"/>' }) },
+        beard:'<path d="M68 140 Q100 132 132 140 Q136 162 120 182 Q110 194 100 194 Q90 194 80 182 Q64 162 68 140 Z" fill="url(#h4hr)"/>' }) },
     story:'고려에 거란(외적)이 쳐들어왔어요. 강감찬 장군은 지혜로운 작전을 세워 귀주라는 곳에서 크게 승리했어요. 이 큰 승리를 "귀주대첩"이라고 불러요.',
     questions:[
       { q:'귀주대첩에서 거란을 물리친 고려의 장군은?', options:['이순신','강감찬','김유신'], answer:1, hint:'"강"씨 성을 가진 고려의 명장이에요.' },
@@ -567,7 +579,7 @@ const HISTORY = [
     ] },
   { id:'h5', num:5, era:'조선', flag:'📜', reward:50,
     card:{ emoji:'👑', name:'세종대왕', desc:'한글(훈민정음)을 만든 조선의 임금',
-      art:portraitSVG('h5', { bg:'#e3d6c2', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#b8433d', robeDark:'#7a2a26',
+      art:portraitSVG('h5', { bg:'#e3d6c2', bgDark:'#b8a279', skin:'#FFD9A8', skinDark:'#E8B888', hair:'#3a2f28', hairDark:'#15100a', robe:'#b8433d', robeDark:'#7a2a26',
         headwear:'<path d="M52 96 Q52 42 100 38 Q148 42 148 96 Q148 72 100 66 Q52 72 52 96 Z" fill="#1a1a1a"/>' +
           '<path d="M146 66 Q168 58 164 82 Q154 78 146 74 Z" fill="#1a1a1a"/><path d="M54 66 Q32 58 36 82 Q46 78 54 74 Z" fill="#1a1a1a"/>' +
           '<rect x="150" y="196" width="34" height="22" rx="3" fill="#FFF6E0" stroke="#c99b2f" stroke-width="2"/><line x1="156" y1="203" x2="178" y2="203" stroke="#c99b2f" stroke-width="1.5"/><line x1="156" y1="210" x2="178" y2="210" stroke="#c99b2f" stroke-width="1.5"/>' }) },
