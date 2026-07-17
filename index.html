@@ -104,6 +104,10 @@
     font-family:'Jua'; font-size:15px; padding:8px 12px; border-radius:14px;
     display:flex; align-items:center; gap:6px;
   }
+  .cal-btn{
+    flex:none; background:var(--panel-2); border:none; color:var(--text);
+    width:38px; height:38px; border-radius:12px; font-size:17px; cursor:pointer;
+  }
   /* 동기화 상태 표시줄 */
   .sync-status{ font-size:11px; color:var(--muted); text-align:right; margin:0 6px 16px; height:14px; }
   .sync-status.saved{ color:var(--mint); }
@@ -123,6 +127,10 @@
 
   .section-title{ font-family:'Jua'; font-size:19px; margin:20px 4px 12px; display:flex; align-items:center; gap:8px; }
   .section-title small{ color:var(--muted); font-size:12px; font-family:'Gowun Dodum'; }
+  .term-select{
+    display:block; margin:0 4px 14px; background:var(--panel); border:2px solid var(--line);
+    color:var(--text); font-family:'Gowun Dodum'; font-size:13px; padding:8px 10px; border-radius:12px;
+  }
 
   .quest{
     display:flex; align-items:center; gap:14px;
@@ -251,6 +259,17 @@
   .reward-pop .title{ font-family:'Jua'; font-size:22px; margin-top:8px; }
   .reward-pop .gain{ color:var(--gold); font-family:'Jua'; font-size:16px; margin-top:6px; }
 
+  .cal-nav{ display:flex; align-items:center; justify-content:center; gap:18px; margin:4px 0 14px; font-family:'Jua'; font-size:15px; }
+  .cal-nav button{ background:var(--panel-2); border:none; color:var(--text); width:32px; height:32px; border-radius:10px; font-size:18px; cursor:pointer; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-dow{ text-align:center; color:var(--muted); font-size:11px; padding:4px 0; }
+  .cal-cell{ aspect-ratio:1/1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:10px; font-size:12px; position:relative; }
+  .cal-cell.empty{ visibility:hidden; }
+  .cal-cell:not(.empty){ background:#0e1830; }
+  .cal-cell.today{ border:2px solid var(--gold); }
+  .cal-cell.attended{ background:rgba(78,204,163,.18); }
+  .cal-cell .dot{ width:5px; height:5px; border-radius:50%; background:var(--mint); margin-top:2px; }
+
   .toast{
     position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px);
     background:#0e1830; border:2px solid var(--gold); color:var(--gold);
@@ -282,6 +301,7 @@
       <div class="expbar"><i id="expFill"></i></div>
     </div>
     <div class="gold-pill">🪙 <span id="goldText">0</span></div>
+    <button class="cal-btn" id="calBtn" title="출석 달력">📅</button>
   </div>
   <div class="sync-status" id="syncStatus"></div>
 
@@ -291,7 +311,8 @@
       <div class="msg" id="dailyMsg">오늘도 탐험 준비 완료! 🚀</div>
       <div class="sub">퀘스트를 깨면 골드와 경험치를 얻어요.</div>
     </div>
-    <div class="section-title">📋 오늘의 복습 퀘스트 <small>1학기 핵심</small></div>
+    <div class="section-title">📋 오늘의 복습 퀘스트</div>
+    <select id="termSelect" class="term-select"></select>
     <div id="questList"></div>
   </section>
 
@@ -431,7 +452,9 @@ const DAILY_MESSAGES = [
 ];
 
 // answer = options 배열의 인덱스(0부터 시작)
-const QUESTS = [
+// 학년/학기별 복습 퀘스트 묶음
+const TERMS = [
+  { id:'4-1', label:'4학년 1학기', quests:[
   { id:'math1', subject:'수학', icon:'🔢', title:'보물상자 비밀번호', desc:'큰 수 · 곱셈으로 자물쇠 열기',
     questions:[
       { q:'350 × 20 은 얼마일까요?', options:['700','7,000','70,000'], answer:1, hint:'35 × 2 = 70 을 먼저 구하고, 뒤에 0을 두 개 붙여봐!' },
@@ -487,6 +510,64 @@ const QUESTS = [
       { q:'산이 많아 나무를 가꾸거나 버섯을 기르는 지역을 무엇이라고 할까요?', options:['산지촌','어촌','도시'], answer:0, hint:'산으로 둘러싸인 마을이에요.' },
       { q:'디지털 영상 지도에서 위치를 정확히 찾을 때 사용하는 것은?', options:['위성 사진과 좌표','기호표만','나침반만'], answer:0, hint:'인공위성 사진과 좌표를 이용해 정확한 위치를 찾아요.', hard:true }
     ] }
+  ] },
+  { id:'4-2', label:'4학년 2학기', quests:[
+  { id:'math1_2', subject:'수학', icon:'🔢', title:'분수 마을 통과하기', desc:'분수의 덧셈과 뺄셈',
+    questions:[
+      { q:'1/5 + 2/5 는 얼마일까요?', options:['3/5','3/10','2/5'], answer:0, hint:'분모가 같으면 분자끼리만 더해요.' },
+      { q:'3/4 - 1/4 는 얼마일까요?', options:['2/4(=1/2)','4/4','2/8'], answer:0, hint:'분모는 그대로, 분자만 빼요.' },
+      { q:'2와 1/3을 대분수로 바르게 나타낸 것은?', options:['2 1/3','1 2/3','3 1/2'], answer:0, hint:'자연수 2에 진분수 1/3을 그대로 붙여요.' },
+      { q:'5/6 + 4/6 의 값은? (가분수로)', options:['9/6','9/12','1/6'], answer:0, hint:'분자끼리 더하면 9, 분모는 그대로 6이에요.' },
+      { q:'1 1/4 + 2/4 는 얼마일까요?', options:['1 3/4','1 1/2','2 1/4'], answer:0, hint:'자연수는 그대로 두고 분수끼리 더해요: 1/4+2/4=3/4.' },
+      { q:'7/8 - 3/8 은 얼마일까요?', options:['4/8(=1/2)','10/8','4/16'], answer:0, hint:'분모는 그대로, 분자 7-3=4.' },
+      { q:'대분수 3 1/2를 가분수로 바꾸면?', options:['7/2','4/2','6/2'], answer:0, hint:'3×2+1=7, 분모는 그대로 2예요.' },
+      { q:'2 1/3 + 1 2/3 은 얼마일까요?', options:['4','3 3/3','3 1/3'], answer:0, hint:'분수끼리 더하면 1/3+2/3=1, 자연수 2+1+1=4예요.', hard:true }
+    ] },
+  { id:'math2_2', subject:'수학', icon:'📐', title:'삼각형 퍼즐 상자', desc:'삼각형의 종류 알아보기',
+    questions:[
+      { q:'세 변의 길이가 모두 같은 삼각형은?', options:['정삼각형','이등변삼각형','직각삼각형'], answer:0, hint:'세 변이 다 똑같으면 정삼각형이에요.' },
+      { q:'두 변의 길이가 같은 삼각형은?', options:['이등변삼각형','정삼각형','둔각삼각형'], answer:0, hint:'"이등변" = 두 변이 같다는 뜻이에요.' },
+      { q:'한 각이 직각(90도)인 삼각형은?', options:['직각삼각형','예각삼각형','정삼각형'], answer:0, hint:'직각이 하나 있으면 직각삼각형이에요.' },
+      { q:'세 각이 모두 예각인 삼각형은?', options:['예각삼각형','둔각삼각형','직각삼각형'], answer:0, hint:'세 각 모두 90도보다 작아요.' },
+      { q:'한 각이 둔각(90도보다 큰 각)인 삼각형은?', options:['둔각삼각형','예각삼각형','정삼각형'], answer:0, hint:'둔각이 하나라도 있으면 둔각삼각형이에요.' },
+      { q:'정삼각형의 세 각의 크기는 각각 몇 도일까요?', options:['60도','90도','45도'], answer:0, hint:'세 각의 합 180도를 3등분하면 60도예요.' },
+      { q:'이등변삼각형에서 길이가 같은 두 변 사이의 밑에 있는 변을 뭐라고 할까요?', options:['밑변','높이','대각선'], answer:0, hint:'이등변삼각형의 아래쪽에 있는 변이에요.' },
+      { q:'삼각형의 세 각의 크기의 합은 항상 몇 도일까요?', options:['180도','360도','90도'], answer:0, hint:'삼각형은 종류에 상관없이 세 각의 합이 180도예요.', hard:true }
+    ] },
+  { id:'sci1_2', subject:'과학', icon:'🌵', title:'식물 탐정 수첩', desc:'환경에 따라 다른 식물의 생김새',
+    questions:[
+      { q:'선인장처럼 물이 부족한 사막에서도 잘 사는 식물의 특징은?', options:['줄기에 물을 저장해요','잎이 아주 커요','뿌리가 없어요'], answer:0, hint:'선인장 줄기는 통통하게 물을 저장해요.' },
+      { q:'연꽃처럼 잎이 물 위에 넓게 떠 있는 식물을 뭐라고 부를까요?', options:['물에 떠서 사는 식물','사막에 사는 식물','산에 사는 식물'], answer:0, hint:'잎이 물 위에 넓게 떠 있어요.' },
+      { q:'부레옥잠이 물에 뜨는 이유는?', options:['잎자루에 공기주머니가 있어서','뿌리가 무거워서','꽃이 가벼워서'], answer:0, hint:'통통한 잎자루 안에 공기가 들어있어요.' },
+      { q:'단풍나무처럼 잎이 여러 갈래로 나뉜 모양을 뭐라고 부를까요?', options:['갈래잎','통잎','바늘잎'], answer:0, hint:'잎이 여러 갈래로 나뉘어 있어요.' },
+      { q:'소나무 잎처럼 뾰족한 모양의 잎을 무엇이라고 할까요?', options:['바늘잎','넓은잎','갈래잎'], answer:0, hint:'바늘처럼 길고 뾰족해요.' },
+      { q:'식물이 겨울을 나는 방법으로 알맞은 것은?', options:['잎을 떨어뜨리고 겨울눈으로 견뎌요','여름보다 더 크게 자라요','물속으로 들어가요'], answer:0, hint:'낙엽수는 겨울에 잎을 떨어뜨려요.' },
+      { q:'민들레 씨가 멀리 날아가는 데 도움을 주는 것은?', options:['하얀 솜털(갓털)','뾰족한 가시','두꺼운 껍질'], answer:0, hint:'바람에 날리는 솜털 같은 것이 붙어 있어요.' },
+      { q:'같은 종류의 식물끼리도 사는 곳에 따라 생김새가 다른 까닭은?', options:['환경에 알맞게 적응했기 때문','색깔이 달라서','이름이 달라서'], answer:0, hint:'사막·물·산 등 환경에 맞게 다르게 적응했어요.', hard:true }
+    ] },
+  { id:'sci2_2', subject:'과학', icon:'🌋', title:'땅속 대모험', desc:'화산과 지진 알아보기',
+    questions:[
+      { q:'땅속 마그마가 분출되어 만들어지는 지형은?', options:['화산','평야','습지'], answer:0, hint:'마그마가 밖으로 나와 만들어진 지형이에요.' },
+      { q:'화산이 분출할 때 나오는, 녹은 암석을 무엇이라고 할까요?', options:['용암','빙하','자갈'], answer:0, hint:'화산에서 흘러나오는 뜨거운 액체예요.' },
+      { q:'땅이 갑자기 흔들리는 현상을 무엇이라고 할까요?', options:['지진','태풍','가뭄'], answer:0, hint:'땅속에서 힘이 작용해 땅이 흔들려요.' },
+      { q:'지진이 났을 때 건물 안에 있다면 가장 먼저 해야 할 행동은?', options:['튼튼한 탁자 아래로 몸을 피해요','창문 옆에 서 있어요','엘리베이터를 타요'], answer:0, hint:'떨어지는 물건으로부터 몸을 보호해야 해요.' },
+      { q:'화산 활동으로 얻을 수 있는 이로운 점은?', options:['온천이나 지열 발전에 활용해요','항상 홍수가 나요','공기가 더러워지기만 해요'], answer:0, hint:'화산 지역의 뜨거운 열을 온천이나 전기를 만드는 데 써요.' },
+      { q:'화산 활동으로 생기는, 검고 구멍이 숭숭 뚫린 돌은?', options:['화산암','석회암','대리석'], answer:0, hint:'용암이 식어서 굳으면 구멍이 많은 돌이 돼요.' },
+      { q:'지진의 세기를 나타내는 단위는?', options:['규모','온도','속도'], answer:0, hint:'"규모 OO"처럼 지진의 크기를 나타내요.' },
+      { q:'화산과 지진이 자주 일어나는 지역에 대한 설명으로 알맞은 것은?', options:['땅속 판(지각판)의 경계와 관련이 깊어요','전 세계 어디서나 똑같이 일어나요','바다에서는 절대 일어나지 않아요'], answer:0, hint:'지구 표면은 여러 판으로 나뉘어 있고, 그 경계에서 화산·지진이 잦아요.', hard:true }
+    ] },
+  { id:'soc1_2', subject:'사회', icon:'🏘️', title:'우리 동네 vs 다른 동네', desc:'촌락과 도시의 생활 모습',
+    questions:[
+      { q:'논, 밭, 바다 등 자연환경을 이용해 살아가는 곳을 무엇이라고 할까요?', options:['촌락','도시','공장 지대'], answer:0, hint:'농촌·어촌·산지촌을 모두 합쳐 촌락이라고 해요.' },
+      { q:'사람이 많이 모여 살고 높은 건물이 많은 곳을 무엇이라고 할까요?', options:['도시','촌락','섬마을'], answer:0, hint:'인구가 밀집하고 회사·시설이 많은 곳이에요.' },
+      { q:'촌락에 사는 사람들이 주로 하는 일은?', options:['농업, 어업 등 자연을 이용하는 일','회사 사무직 위주','대형 백화점 운영 위주'], answer:0, hint:'자연환경을 이용한 생산 활동을 많이 해요.' },
+      { q:'도시에 사람이 많이 모이면서 생기는 문제로 알맞은 것은?', options:['교통 혼잡과 주택 부족','논밭이 너무 많아짐','인구가 너무 적어짐'], answer:0, hint:'사람이 몰리면 길이 막히고 집이 부족해질 수 있어요.' },
+      { q:'촌락과 도시가 서로 돕고 교류하는 예로 알맞은 것은?', options:['농촌은 농산물을, 도시는 공산품을 주고받아요','서로 전혀 왕래하지 않아요','촌락에만 필요한 것이 있어요'], answer:0, hint:'서로 부족한 것을 주고받으며 도와요.' },
+      { q:'우리가 필요한 물건을 만드는 활동을 무엇이라고 할까요?', options:['생산','소비','저축'], answer:0, hint:'물건이나 서비스를 새로 만들어 내는 것이에요.' },
+      { q:'만들어진 물건이나 서비스를 사서 이용하는 것을 무엇이라고 할까요?', options:['소비','생산','교환'], answer:0, hint:'물건을 사서 쓰는 것을 소비라고 해요.' },
+      { q:'시장에서 물건값이 자주 바뀌는 까닭으로 가장 알맞은 것은?', options:['사려는 사람과 팔려는 사람의 수(수요와 공급)가 달라져서','가게 주인 마음대로 정해서','물건이 항상 똑같이 만들어져서'], answer:0, hint:'사고 싶어하는 사람과 팔려는 양에 따라 가격이 오르내려요.', hard:true }
+    ] }
+  ] }
 ];
 
 const HISTORY = [
@@ -558,24 +639,48 @@ const HISTORY = [
 ];
 
 // 문제마다 고유 id 부여(퀘스트id#순번) — 오답/정답 이력을 문제 단위로 기억하기 위함
-QUESTS.forEach(qz => qz.questions.forEach((q,i) => { q.id = qz.id + '#' + i; }));
+TERMS.forEach(term => term.quests.forEach(qz => qz.questions.forEach((q,i) => { q.id = qz.id + '#' + i; })));
 HISTORY.forEach(st => st.questions.forEach((q,i) => { q.id = st.id + '#' + i; }));
+
+// 현재 선택된 학년/학기의 퀘스트 목록
+function currentQuests(){
+  const term = TERMS.find(t => t.id === STATE.term) || TERMS[0];
+  return term.quests;
+}
 
 // 반복 학습 시 보여줄 문제 고르기: 틀렸던 문제·고난도 문제는 계속 나올 수 있고,
 // 이미 맞힌 일반 문제는 아직 안 나온 새 문제로 교체된다.
+// 날짜+퀘스트로 시드를 만들어 매일 다른(그러나 같은 날엔 일정한) 순서로 섞기
+function hashStr(str){
+  let h = 0;
+  for (let i = 0; i < str.length; i++){ h = (Math.imul(h, 31) + str.charCodeAt(i)) >>> 0; }
+  return h;
+}
+function seededShuffle(arr, seed){
+  const a = arr.slice();
+  let s = seed >>> 0;
+  for (let i = a.length - 1; i > 0; i--){
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
 function buildSession(group, size){
   size = size || 5;
   const pool = group.questions;
+  const seed = hashStr(group.id + '_' + new Date().toDateString());
   const mustRepeat = [], fresh = [], mastered = [];
   pool.forEach(q => {
     if (STATE.wrongQ.includes(q.id) || q.hard) mustRepeat.push(q);
     else if (!STATE.doneQ.includes(q.id)) fresh.push(q);
     else mastered.push(q);
   });
-  const session = mustRepeat.slice(0, size);
-  fresh.forEach(q => { if (session.length < size) session.push(q); });
-  mastered.forEach(q => { if (session.length < size) session.push(q); });
-  return session;
+  const session = seededShuffle(mustRepeat, seed).slice(0, size);
+  seededShuffle(fresh, seed + 1).forEach(q => { if (session.length < size) session.push(q); });
+  seededShuffle(mastered, seed + 2).forEach(q => { if (session.length < size) session.push(q); });
+  return seededShuffle(session, seed + 3);
 }
 
 const SHOP = [
@@ -590,7 +695,7 @@ const SHOP = [
    4) 게임 상태 & 핵심 로직
    ============================================================ */
 function defaultState(){
-  return { level:1, exp:0, gold:0, doneQuests:[], clearedStages:[], cards:[], boughtLog:[], wrongQ:[], doneQ:[], lastAttendance:null, streak:0 };
+  return { level:1, exp:0, gold:0, doneQuests:[], clearedStages:[], cards:[], boughtLog:[], wrongQ:[], doneQ:[], lastAttendance:null, streak:0, attendanceDates:[], term:'4-1' };
 }
 let STATE = defaultState();
 const LV_EXP = 500;
@@ -620,8 +725,13 @@ function renderTopbar(){
 
 function renderHome(){
   $('#dailyMsg').textContent = DAILY_MESSAGES[new Date().getDate() % DAILY_MESSAGES.length];
+  const sel = $('#termSelect');
+  if (sel && sel.children.length === 0){
+    TERMS.forEach(t => { sel.innerHTML += '<option value="' + t.id + '">' + t.label + '</option>'; });
+  }
+  if (sel) sel.value = STATE.term;
   const list = $('#questList'); list.innerHTML = '';
-  QUESTS.forEach(qz => {
+  currentQuests().forEach(qz => {
     const done = STATE.doneQuests.includes(qz.id);
     const el = document.createElement('div');
     el.className = 'quest' + (done ? ' done' : '');
@@ -904,6 +1014,13 @@ document.querySelectorAll('.tab').forEach(tab => {
   };
 });
 
+$('#calBtn').onclick = () => openCalendar();
+
+$('#termSelect').onchange = async (e) => {
+  STATE.term = e.target.value;
+  await renderAll();
+};
+
 $('#resetBtn').onclick = async () => {
   if (confirm('이 탐험가의 기록을 모두 지우고 처음부터 다시 시작할까요?')){
     STATE = defaultState();
@@ -923,6 +1040,7 @@ function checkAttendance(){
   const y = new Date(); y.setDate(y.getDate() - 1);
   STATE.streak = (STATE.lastAttendance === y.toDateString()) ? STATE.streak + 1 : 1;
   STATE.lastAttendance = today;
+  if (!STATE.attendanceDates.includes(today)) STATE.attendanceDates.push(today);
   const bonus = (STATE.streak % 5 === 0) ? 30 : 0;
   const gain = 10 + bonus;
   STATE.gold += gain;
@@ -938,8 +1056,51 @@ function showAttendanceReward(att){
     '<div class="gain">🪙 +10</div>' +
     (att.bonus > 0 ? '<div class="gain">🔥 ' + att.streak + '일 연속 출석 보너스! 🪙 +' + att.bonus + '</div>' : '') +
     '<div style="color:var(--muted);font-size:13px;margin-top:8px">연속 출석 ' + att.streak + '일째</div>' +
-    '<button class="next-btn" id="attDone" style="margin-top:20px">시작하기 ✨</button></div>';
+    '<button class="next-btn" id="attDone" style="margin-top:20px">시작하기 ✨</button>' +
+    '<button class="tts-btn" id="attCal" style="margin-top:10px">📅 출석 달력 보기</button></div>';
   $('#attDone').onclick = closeModal;
+  $('#attCal').onclick = () => openCalendar();
+}
+
+// 출석 달력
+let calViewDate = new Date();
+function openCalendar(viewDate){
+  calViewDate = viewDate || new Date();
+  openModal();
+  renderCalendar();
+}
+function renderCalendar(){
+  const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+  const first = new Date(y, m, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayStr = new Date().toDateString();
+  const attended = new Set(STATE.attendanceDates);
+
+  const dowLabels = ['일','월','화','수','목','금','토'];
+  let dow = dowLabels.map(d => '<div class="cal-dow">' + d + '</div>').join('');
+
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div class="cal-cell empty"></div>';
+  let monthAttended = 0;
+  for (let d = 1; d <= daysInMonth; d++){
+    const key = new Date(y, m, d).toDateString();
+    const isToday = key === todayStr;
+    const isAttended = attended.has(key);
+    if (isAttended) monthAttended++;
+    cells += '<div class="cal-cell' + (isToday ? ' today' : '') + (isAttended ? ' attended' : '') + '">' +
+      '<span>' + d + '</span>' + (isAttended ? '<i class="dot"></i>' : '') +
+      '</div>';
+  }
+
+  modalContent.innerHTML =
+    '<div class="modal-head"><span class="tag">📅 출석 달력</span><button class="x" id="closeX">✕</button></div>' +
+    '<div class="cal-nav"><button id="calPrev">‹</button><b>' + y + '년 ' + (m + 1) + '월</b><button id="calNext">›</button></div>' +
+    '<div class="cal-grid">' + dow + cells + '</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin-top:14px;text-align:center">이번 달 출석 ' + monthAttended + '일 · 연속 출석 ' + STATE.streak + '일째</div>';
+  $('#closeX').onclick = closeModal;
+  $('#calPrev').onclick = () => { calViewDate = new Date(y, m - 1, 1); renderCalendar(); };
+  $('#calNext').onclick = () => { calViewDate = new Date(y, m + 1, 1); renderCalendar(); };
 }
 
 // 코드로 로그인하고 데이터 불러와 앱 시작
