@@ -18,6 +18,18 @@
 <meta http-equiv="Expires" content="0" />
 <title>범희의 방학 탐험대</title>
 
+<!-- 매일 자동으로 캐시를 우회해 최신 버전을 받아오게 함 -->
+<script>
+(function(){
+  var today = new Date().toDateString();
+  var params = new URLSearchParams(location.search);
+  if (params.get('v') !== today){
+    params.set('v', today);
+    location.replace(location.pathname + '?' + params.toString());
+  }
+})();
+</script>
+
 <!-- 아이가 읽기 편한 둥근 한글 폰트 -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
