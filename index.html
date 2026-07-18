@@ -18,13 +18,13 @@
 <meta http-equiv="Expires" content="0" />
 <title>범희의 방학 탐험대</title>
 
-<!-- 매일 자동으로 캐시를 우회해 최신 버전을 받아오게 함 -->
+<!-- 배포할 때마다 BUILD_VERSION을 올려서 캐시를 우회해 최신 버전을 받아오게 함 -->
 <script>
 (function(){
-  var today = new Date().toDateString();
+  var BUILD_VERSION = '2026-07-18-182634';
   var params = new URLSearchParams(location.search);
-  if (params.get('v') !== today){
-    params.set('v', today);
+  if (params.get('v') !== BUILD_VERSION){
+    params.set('v', BUILD_VERSION);
     location.replace(location.pathname + '?' + params.toString());
   }
 })();
