@@ -21,7 +21,7 @@
 <!-- 배포할 때마다 BUILD_VERSION을 올려서 캐시를 우회해 최신 버전을 받아오게 함 -->
 <script>
 (function(){
-  var BUILD_VERSION = '2026-07-19-192822';
+  var BUILD_VERSION = '2026-07-19-214419';
   var params = new URLSearchParams(location.search);
   if (params.get('v') !== BUILD_VERSION){
     params.set('v', BUILD_VERSION);
@@ -1242,17 +1242,11 @@ function currentQuests(){
 // 반복 학습 시 보여줄 문제 고르기: 틀렸던 문제·고난도 문제는 계속 나올 수 있고,
 // 이미 맞힌 일반 문제는 아직 안 나온 새 문제로 교체된다.
 // 날짜+퀘스트로 시드를 만들어 매일 다른(그러나 같은 날엔 일정한) 순서로 섞기
-function hashStr(str){
-  let h = 0;
-  for (let i = 0; i < str.length; i++){ h = (Math.imul(h, 31) + str.charCodeAt(i)) >>> 0; }
-  return h;
-}
-function seededShuffle(arr, seed){
+// 매번 열 때마다 무작위로 섞기(날짜에 고정하지 않음) — 같은 날 다시 들어가도 매번 다르게 나옴
+function shuffle(arr){
   const a = arr.slice();
-  let s = seed >>> 0;
   for (let i = a.length - 1; i > 0; i--){
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    const j = s % (i + 1);
+    const j = Math.floor(Math.random() * (i + 1));
     const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
   }
   return a;
@@ -1261,17 +1255,16 @@ function seededShuffle(arr, seed){
 function buildSession(group, size){
   size = size || 5;
   const pool = group.questions;
-  const seed = hashStr(group.id + '_' + new Date().toDateString());
   const mustRepeat = [], fresh = [], mastered = [];
   pool.forEach(q => {
     if (STATE.wrongQ.includes(q.id) || q.hard) mustRepeat.push(q);
     else if (!STATE.doneQ.includes(q.id)) fresh.push(q);
     else mastered.push(q);
   });
-  const session = seededShuffle(mustRepeat, seed).slice(0, size);
-  seededShuffle(fresh, seed + 1).forEach(q => { if (session.length < size) session.push(q); });
-  seededShuffle(mastered, seed + 2).forEach(q => { if (session.length < size) session.push(q); });
-  return seededShuffle(session, seed + 3);
+  const session = shuffle(mustRepeat).slice(0, size);
+  shuffle(fresh).forEach(q => { if (session.length < size) session.push(q); });
+  shuffle(mastered).forEach(q => { if (session.length < size) session.push(q); });
+  return shuffle(session);
 }
 
 const SHOP = [
