@@ -21,7 +21,7 @@
 <!-- 배포할 때마다 BUILD_VERSION을 올려서 캐시를 우회해 최신 버전을 받아오게 함 -->
 <script>
 (function(){
-  var BUILD_VERSION = '2026-07-19-214419';
+  var BUILD_VERSION = '2026-07-21-214144';
   var params = new URLSearchParams(location.search);
   if (params.get('v') !== BUILD_VERSION){
     params.set('v', BUILD_VERSION);
@@ -1446,10 +1446,35 @@ function showQuestion(){
     '<div class="options" id="opts">' + opts + '</div>' +
     '<div class="feedback" id="feedback"></div>';
   $('#closeX').onclick = closeModal;
-  $('#ttsQ').onclick = () => speak(cur.q);
-  $('#opts').querySelectorAll('.opt').forEach(btn => {
+  const ttsBtn = $('#ttsQ');
+  const optBtns = $('#opts').querySelectorAll('.opt');
+  optBtns.forEach(btn => {
     btn.onclick = () => checkAnswer(parseInt(btn.dataset.i), cur);
   });
+
+  if (quiz.type === 'history'){
+    // 한국사는 음성 안내가 끝나야 답을 고를 수 있음
+    let unlocked = false;
+    const lock = () => {
+      unlocked = false;
+      optBtns.forEach(b => b.disabled = true);
+      ttsBtn.disabled = true;
+      ttsBtn.textContent = '🔊 읽는 중...';
+    };
+    const unlock = () => {
+      if (unlocked) return;
+      unlocked = true;
+      optBtns.forEach(b => b.disabled = false);
+      ttsBtn.disabled = false;
+      ttsBtn.textContent = '🔊 다시 듣기';
+    };
+    ttsBtn.onclick = () => { lock(); speak(cur.q, unlock); setTimeout(unlock, 12000); };
+    lock();
+    speak(cur.q, unlock);
+    setTimeout(unlock, 12000); // 음성 재생이 실패해도 12초 뒤엔 풀리도록 하는 안전장치
+  } else {
+    ttsBtn.onclick = () => speak(cur.q);
+  }
 }
 
 const WRONG_PENALTY = 5; // 오답 시 깎이는 골드
@@ -1559,8 +1584,8 @@ function stopSpeak(){
   speakToken++;
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
-function speak(text){
-  if (!('speechSynthesis' in window)) return;
+function speak(text, onDone){
+  if (!('speechSynthesis' in window)) { if (onDone) onDone(); return; }
   stopSpeak();
   const myToken = speakToken;
   const voice = pickVoice();
@@ -1569,7 +1594,8 @@ function speak(text){
   const queue = sentences.length ? sentences : [text];
   let i = 0;
   const speakNext = () => {
-    if (myToken !== speakToken || i >= queue.length) return;
+    if (myToken !== speakToken) return; // 중간에 취소된 경우 — onDone 호출 안 함
+    if (i >= queue.length) { if (onDone) onDone(); return; }
     const u = new SpeechSynthesisUtterance(queue[i].trim());
     u.lang = 'ko-KR';
     if (voice) u.voice = voice;
