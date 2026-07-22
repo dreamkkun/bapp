@@ -21,7 +21,7 @@
 <!-- 배포할 때마다 BUILD_VERSION을 올려서 캐시를 우회해 최신 버전을 받아오게 함 -->
 <script>
 (function(){
-  var BUILD_VERSION = '2026-07-21-214144';
+  var BUILD_VERSION = '2026-07-23-064038';
   var params = new URLSearchParams(location.search);
   if (params.get('v') !== BUILD_VERSION){
     params.set('v', BUILD_VERSION);
@@ -1424,11 +1424,33 @@ function showStory(story, tag, onNext){
     '<div class="modal-head"><span class="tag">📖 ' + tag + '</span><button class="x" id="closeX">✕</button></div>' +
     '<div class="story">' + story + '</div>' +
     '<button class="tts-btn" id="ttsStory">🔊 읽어주기</button>' +
-    '<button class="next-btn" id="storyNext">퀴즈 시작! 🚀</button>';
+    '<button class="next-btn" id="storyNext" disabled>🔊 이야기를 다 읽으면 시작할 수 있어요</button>';
   $('#closeX').onclick = closeModal;
-  $('#ttsStory').onclick = () => speak(story);
-  $('#storyNext').onclick = onNext;
-  speak(story);
+
+  // 이야기 설명을 다 읽어야 "퀴즈 시작" 버튼이 눌리게 함
+  const nextBtn = $('#storyNext');
+  const ttsBtn = $('#ttsStory');
+  let unlocked = false;
+  const lock = () => {
+    unlocked = false;
+    nextBtn.disabled = true;
+    nextBtn.textContent = '🔊 이야기를 다 읽으면 시작할 수 있어요';
+    ttsBtn.disabled = true;
+    ttsBtn.textContent = '🔊 읽는 중...';
+  };
+  const unlock = () => {
+    if (unlocked) return;
+    unlocked = true;
+    nextBtn.disabled = false;
+    nextBtn.textContent = '퀴즈 시작! 🚀';
+    ttsBtn.disabled = false;
+    ttsBtn.textContent = '🔊 다시 듣기';
+  };
+  ttsBtn.onclick = () => { lock(); speak(story, unlock); setTimeout(unlock, 20000); };
+  nextBtn.onclick = () => { if (unlocked) onNext(); };
+  lock();
+  speak(story, unlock);
+  setTimeout(unlock, 20000); // 음성 재생이 실패해도 20초 뒤엔 풀리도록 하는 안전장치
 }
 
 function showQuestion(){
